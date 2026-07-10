@@ -84,6 +84,56 @@ describe('moving cards between backlog and sprint', () => {
   })
 })
 
+describe('filtering cards by multiple sprints (CO-399)', () => {
+  it('lists cards of several sprints at once via sprintIds', async () => {
+    const project = await freshProject(ctx.db)
+    const s1 = await createSprint(ctx.db, { projectId: project.id, name: 'S1' })
+    const s2 = await createSprint(ctx.db, { projectId: project.id, name: 'S2' })
+    const s3 = await createSprint(ctx.db, { projectId: project.id, name: 'S3' })
+    const c1 = await createCard(ctx.db, {
+      projectId: project.id,
+      title: 'in s1',
+      sprintId: s1.id
+    })
+    const c2 = await createCard(ctx.db, {
+      projectId: project.id,
+      title: 'in s2',
+      sprintId: s2.id
+    })
+    await createCard(ctx.db, {
+      projectId: project.id,
+      title: 'in s3',
+      sprintId: s3.id
+    })
+    await createCard(ctx.db, { projectId: project.id, title: 'loose' })
+
+    const cards = await listCards(ctx.db, {
+      projectId: project.id,
+      sprintIds: [s1.id, s2.id]
+    })
+    expect(cards.map(c => c.id).sort()).toEqual([c1.id, c2.id].sort())
+  })
+
+  it('matches no card when sprintIds is empty', async () => {
+    const project = await freshProject(ctx.db)
+    const sprint = await createSprint(ctx.db, {
+      projectId: project.id,
+      name: 'S'
+    })
+    await createCard(ctx.db, {
+      projectId: project.id,
+      title: 'x',
+      sprintId: sprint.id
+    })
+
+    const cards = await listCards(ctx.db, {
+      projectId: project.id,
+      sprintIds: []
+    })
+    expect(cards).toEqual([])
+  })
+})
+
 describe('default status by sprint membership', () => {
   it('a card with no sprint lands in the backlog status', async () => {
     const project = await freshProject(ctx.db)

@@ -10,7 +10,7 @@ defineProps<{
 }>()
 
 defineEmits<{
-  (e: 'start' | 'complete' | 'reopen' | 'archived' | 'destroyed'): void
+  (e: 'start' | 'complete' | 'deactivate' | 'reopen' | 'archived' | 'destroyed'): void
 }>()
 </script>
 
@@ -37,6 +37,15 @@ defineEmits<{
           variant="soft"
           label="Start"
           @click="$emit('start')"
+        />
+        <UButton
+          v-if="sprint.status === 'active'"
+          icon="i-lucide-pause"
+          size="xs"
+          color="neutral"
+          variant="soft"
+          label="Deactivate"
+          @click="$emit('deactivate')"
         />
         <UButton
           v-if="sprint.status === 'active'"

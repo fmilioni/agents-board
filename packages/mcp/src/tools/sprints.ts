@@ -5,8 +5,9 @@ import {
   archiveSprint,
   completeSprint,
   createSprint,
+  deactivateSprint,
   destroySprint,
-  getActiveSprint,
+  getActiveSprints,
   listSprints,
   reopenSprint,
   restoreSprint,
@@ -57,10 +58,11 @@ export function registerSprintTools(server: McpServer, db: Database) {
   server.registerTool(
     'get_active_sprint',
     {
-      description: 'Get the currently active sprint of a project, if any.',
+      description:
+        'Get the active sprints of a project. A project may have several active at once, so this returns an ARRAY (empty when none are active).',
       inputSchema: { projectId: z.string() }
     },
-    async ({ projectId }) => asJson(await getActiveSprint(db, projectId))
+    async ({ projectId }) => asJson(await getActiveSprints(db, projectId))
   )
 
   server.registerTool(
@@ -106,7 +108,7 @@ export function registerSprintTools(server: McpServer, db: Database) {
     'start_sprint',
     {
       description:
-        'Activate a sprint. Any currently active sprint in the same project is auto-completed.',
+        'Activate a sprint. Other sprints in the same project stay as they are — a project can have several active at once.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(sprintAck(await startSprint(db, id)))
@@ -119,6 +121,16 @@ export function registerSprintTools(server: McpServer, db: Database) {
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(sprintAck(await completeSprint(db, id)))
+  )
+
+  server.registerTool(
+    'deactivate_sprint',
+    {
+      description:
+        'Move an ACTIVE sprint back to `planned` (the inverse of start) WITHOUT completing it. Its cards stay assigned but drop off the board (which shows only active sprints); endsAt is not set. No-op if the sprint is not active. Use start_sprint to make it active again.',
+      inputSchema: { id: z.string() }
+    },
+    async ({ id }) => asJson(sprintAck(await deactivateSprint(db, id)))
   )
 
   server.registerTool(

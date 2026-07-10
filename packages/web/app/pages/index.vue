@@ -10,12 +10,12 @@ const api = useApi()
 
 useHead({ title: 'Home' })
 
-const { data: activeSprint, refresh: refreshSprint } = useActiveSprint(
+const { data: activeSprints, refresh: refreshSprint } = useActiveSprint(
   () => currentProjectId.value
 )
 
 const { sprintCards, looseCards, cards: boardCards, load: loadCards }
-  = useBoardCards(currentProjectId, activeSprint)
+  = useBoardCards(currentProjectId, activeSprints)
 const sprints = ref<Sprint[]>([])
 
 async function loadDashboard() {
@@ -30,7 +30,7 @@ async function loadDashboard() {
 }
 
 useProjectData(currentProjectId, loadDashboard, {
-  watch: [currentProjectId, activeSprint],
+  watch: [currentProjectId, activeSprints],
   onEvent: (event) => {
     if (event.type === 'sprint.changed' || event.type === 'sprint.deleted') {
       refreshSprint()
@@ -186,15 +186,19 @@ const cardLists = computed(() => {
               <template #header>
                 <div class="flex items-center justify-between gap-2">
                   <span class="font-medium truncate">
-                    {{ activeSprint ? activeSprint.name : 'Active sprint' }}
+                    {{ activeSprints.length === 1 ? activeSprints[0]!.name : 'Active sprints' }}
                   </span>
-                  <UBadge v-if="activeSprint" color="info" variant="subtle">
-                    active
+                  <UBadge
+                    v-if="activeSprints.length"
+                    color="info"
+                    variant="subtle"
+                  >
+                    {{ activeSprints.length > 1 ? `${activeSprints.length} active` : 'active' }}
                   </UBadge>
                 </div>
               </template>
 
-              <div v-if="!activeSprint" class="text-sm text-muted py-4 text-center">
+              <div v-if="!activeSprints.length" class="text-sm text-muted py-4 text-center">
                 No active sprint. Start one from
                 <NuxtLink to="/sprints" class="text-primary hover:underline">Sprints</NuxtLink>.
               </div>

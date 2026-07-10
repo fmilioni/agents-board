@@ -188,6 +188,12 @@ async function completeSprint() {
   await loadSprint()
 }
 
+async function deactivateSprint() {
+  if (!sprint.value) return
+  await api(`/sprints/${sprint.value.id}/deactivate`, { method: 'POST' })
+  await loadSprint()
+}
+
 function onSprintRemoved() {
   router.push('/sprints')
 }
@@ -258,6 +264,16 @@ async function restoreCard(cardId: string) {
             label="Start"
             class="ml-2"
             @click="startSprint"
+          />
+          <UButton
+            v-if="sprint?.status === 'active'"
+            icon="i-lucide-pause"
+            size="sm"
+            color="neutral"
+            variant="soft"
+            label="Deactivate"
+            class="ml-2"
+            @click="deactivateSprint"
           />
           <UButton
             v-if="sprint?.status === 'active'"

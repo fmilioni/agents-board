@@ -178,6 +178,7 @@ async function resolveProjectIds(
     case '/sprints/:id/restore':
     case '/sprints/:id/start':
     case '/sprints/:id/complete':
+    case '/sprints/:id/deactivate':
     case '/sprints/:id/reopen':
       return entity('sprint', params.id!)
     case '/docs/:id':

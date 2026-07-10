@@ -60,7 +60,7 @@ The test: *could a fresh session build this from the card alone?* If not, it's u
 
 A card needs no sprint to be worked. Three independent calls:
 
-- **Sprint or not** — a large, cohesive effort worth isolating → its own **sprint**; a small one-off → **standalone card(s)** on the board; fits what's underway → the **active sprint**.
+- **Sprint or not** — a large, cohesive effort worth isolating → its own **sprint**; a small one-off → **standalone card(s)** on the board; fits something already underway → an **active sprint** (a project can have **several** active at once — pick which one it belongs to, and ask the user when more than one could fit).
 - **Story or not** — a feature that splits into several testable deliverables → **story + tasks**; one coherent deliverable → **one card**.
 - **Now or later** — worked now → the board; parked → the `backlog`.
 

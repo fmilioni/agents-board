@@ -5,8 +5,9 @@ import {
   archiveSprint,
   completeSprint,
   createSprint,
+  deactivateSprint,
   destroySprint,
-  getActiveSprint,
+  getActiveSprints,
   getSprint,
   listSprints,
   reopenSprint,
@@ -37,7 +38,7 @@ export function registerSprintRoutes(app: FastifyInstance, db: Database) {
 
   app.get('/sprints/active', async (req) => {
     const { projectId } = projectScopedQuery.parse(req.query)
-    return getActiveSprint(db, projectId)
+    return getActiveSprints(db, projectId)
   })
 
   app.get<{ Params: { id: string } }>('/sprints/:id', async (req, reply) => {
@@ -60,6 +61,11 @@ export function registerSprintRoutes(app: FastifyInstance, db: Database) {
   app.post<{ Params: { id: string } }>(
     '/sprints/:id/complete',
     async req => completeSprint(db, req.params.id)
+  )
+
+  app.post<{ Params: { id: string } }>(
+    '/sprints/:id/deactivate',
+    async req => deactivateSprint(db, req.params.id)
   )
 
   app.post<{ Params: { id: string } }>(

@@ -2,7 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 
 import {
-  getActiveSprint,
+  getActiveSprints,
   getAttachment,
   getAttachmentMeta,
   getCardByKey,
@@ -39,7 +39,7 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 type Project = NonNullable<Awaited<ReturnType<typeof getProjectBySlug>>>
-type Sprint = NonNullable<Awaited<ReturnType<typeof getActiveSprint>>>
+type Sprint = Awaited<ReturnType<typeof getActiveSprints>>[number]
 type CardSummary = Awaited<ReturnType<typeof listCards>>[number]
 type CardDetail = NonNullable<Awaited<ReturnType<typeof getCardByKey>>>
 
@@ -136,13 +136,20 @@ export function registerResources(
       if (!project || !canAccessProjectId(scope, project.id)) {
         return md(uri, `Project \`${String(slug)}\` not found.`)
       }
-      const sprint = await getActiveSprint(db, project.id)
-      if (!sprint) return md(uri, `# ${project.name}\n\n_No active sprint._`)
-      const cards = await listCards(db, {
-        projectId: project.id,
-        sprintId: sprint.id
-      })
-      return md(uri, formatBoard(project, sprint, cards))
+      const sprints = await getActiveSprints(db, project.id)
+      if (!sprints.length) {
+        return md(uri, `# ${project.name}\n\n_No active sprint._`)
+      }
+      const sections = await Promise.all(
+        sprints.map(async (sprint) => {
+          const cards = await listCards(db, {
+            projectId: project.id,
+            sprintId: sprint.id
+          })
+          return formatBoard(project, sprint, cards)
+        })
+      )
+      return md(uri, sections.join('\n\n---\n\n'))
     }
   )
 

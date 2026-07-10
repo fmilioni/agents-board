@@ -22,6 +22,9 @@ const listCardsQuery = z.object({
   projectId: projectIdQuery,
   q: z.string().optional(),
   sprintId: z.string().optional(),
+  // Comma-separated sprint ids — the board passes every active sprint at once
+  // (CO-399). Takes precedence over `sprintId` in the core filter.
+  sprintIds: z.string().optional(),
   status: z.enum(CARD_STATUSES).optional(),
   backlogOnly: queryBool,
   includeArchived: queryBool,
@@ -32,10 +35,14 @@ export function registerCardRoutes(app: FastifyInstance, db: Database) {
   app.get('/cards', async (req) => {
     const q = listCardsQuery.parse(req.query)
     const sprintId = q.sprintId === 'null' ? null : q.sprintId
+    const sprintIds = q.sprintIds
+      ? q.sprintIds.split(',').filter(Boolean)
+      : undefined
     if (q.q) {
       return searchCards(db, q.projectId, q.q, {
         status: q.status,
         sprintId,
+        sprintIds,
         includeArchived: q.includeArchived,
         archivedOnly: q.archivedOnly
       })
@@ -43,6 +50,7 @@ export function registerCardRoutes(app: FastifyInstance, db: Database) {
     return listCards(db, {
       projectId: q.projectId,
       sprintId,
+      sprintIds,
       status: q.status,
       backlogOnly: q.backlogOnly,
       includeArchived: q.includeArchived,

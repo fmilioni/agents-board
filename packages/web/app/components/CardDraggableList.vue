@@ -76,6 +76,27 @@ const isGroupEnd = (i: number) => {
 }
 const inGroup = (c: Card) => props.groupByStory && !!c.parentKey
 
+// Story collapse (board only). Provided by the board page; absent elsewhere, so
+// the toggle doesn't render and every group stays expanded (today's behavior).
+const collapse = inject(boardCollapseKey, null)
+const collapsible = computed(() => props.groupByStory && !!collapse)
+const isCollapsed = (parentKey?: string | null) =>
+  !!parentKey && !!collapse?.isCollapsed(parentKey)
+// A card sits inside a collapsed story → its tile is hidden (the envelope header
+// stays, showing the count). Group-start keeps its row for the header; the other
+// children hide the whole row.
+const inCollapsedGroup = (c: Card) => inGroup(c) && isCollapsed(c.parentKey)
+const isHiddenChild = (i: number, c: Card) =>
+  inCollapsedGroup(c) && !isGroupStart(i)
+
+const groupSizes = computed<Record<string, number>>(() => {
+  const m: Record<string, number> = {}
+  for (const c of localList.value) {
+    if (c.parentKey) m[c.parentKey] = (m[c.parentKey] ?? 0) + 1
+  }
+  return m
+})
+
 // Reservation hint per story envelope: the story's OWN claim takes precedence
 // over a reserved-children count (the parent renders as an envelope, not a tile,
 // so its claim has nowhere else to surface). Keyed by parentKey, computed once.
@@ -128,33 +149,67 @@ function onUpdate() {
     :animation="150"
     group="cards"
     ghost-class="opacity-40"
+    filter=".co-collapsed-head"
+    :prevent-on-filter="false"
     :class="listClass"
     @add="onAdd"
     @update="onUpdate"
   >
     <div
       v-for="(card, i) in localList"
+      v-show="!isHiddenChild(i, card)"
       :key="card.id"
       class="cursor-grab active:cursor-grabbing min-w-0 shrink-0"
       :class="[
         i > 0 && (!inGroup(card) || isGroupStart(i)) ? 'mt-2' : '',
         inGroup(card) && 'bg-elevated/40 border-x border-default',
         inGroup(card) && isGroupStart(i) && 'border-t rounded-t-lg',
-        inGroup(card) && isGroupEnd(i) && 'border-b rounded-b-lg'
+        inGroup(card) && isGroupEnd(i) && 'border-b rounded-b-lg',
+        // A collapsed head is the only visible row of its group, so close the box.
+        // `co-collapsed-head` is SortableJS's drag filter: a collapsed group can't
+        // be dragged by its head (expand it to reorder) — its hidden children keep
+        // their positions, so moving just the head would be ambiguous.
+        inGroup(card) && isGroupStart(i) && isCollapsed(card.parentKey)
+          && 'border-b rounded-b-lg co-collapsed-head'
       ]"
     >
       <!-- Story envelope: a tinted rail spans the group; the header sits on the
            first child and each inner card keeps a margin, so the children read as
            nested inside the envelope. One model item per draggable. -->
-      <NuxtLink
+      <div
         v-if="isGroupStart(i)"
-        :to="`/cards/${card.parentKey}`"
-        class="flex items-center gap-1.5 px-2.5 pt-2 pb-1 text-xs hover:underline decoration-primary/40 underline-offset-2"
-        @mousedown.stop
+        class="flex items-center gap-1.5 px-2.5 pt-2 text-xs"
+        :class="isCollapsed(card.parentKey) ? 'pb-2' : 'pb-1'"
       >
-        <UIcon name="i-lucide-layers" class="size-3.5 text-primary shrink-0" />
-        <span class="font-mono font-bold text-default shrink-0 whitespace-nowrap">{{ card.parentKey }}</span>
-        <span class="text-muted truncate min-w-0">{{ parentTitles[card.parentKey ?? ''] ?? '' }}</span>
+        <button
+          v-if="collapsible"
+          type="button"
+          class="flex items-center text-muted hover:text-default shrink-0"
+          :aria-label="isCollapsed(card.parentKey) ? 'Expand tasks' : 'Collapse tasks'"
+          @click.stop.prevent="collapse?.toggle(card.parentKey!)"
+          @mousedown.stop
+        >
+          <UIcon
+            :name="isCollapsed(card.parentKey) ? 'i-lucide-chevron-right' : 'i-lucide-chevron-down'"
+            class="size-3.5"
+          />
+        </button>
+        <NuxtLink
+          :to="`/cards/${card.parentKey}`"
+          class="flex items-center gap-1.5 min-w-0 flex-1 hover:underline decoration-primary/40 underline-offset-2"
+          @mousedown.stop
+        >
+          <UIcon name="i-lucide-layers" class="size-3.5 text-primary shrink-0" />
+          <span class="font-mono font-bold text-default shrink-0 whitespace-nowrap">{{ card.parentKey }}</span>
+          <span class="text-muted truncate min-w-0">{{ parentTitles[card.parentKey ?? ''] ?? '' }}</span>
+          <span
+            v-if="isCollapsed(card.parentKey)"
+            class="text-muted shrink-0 whitespace-nowrap"
+          >
+            · {{ groupSizes[card.parentKey ?? ''] ?? 0 }}
+            {{ (groupSizes[card.parentKey ?? ''] ?? 0) === 1 ? 'task' : 'tasks' }}
+          </span>
+        </NuxtLink>
         <UTooltip
           v-if="groupClaimHints[card.parentKey ?? '']"
           :text="groupClaimHints[card.parentKey ?? '']"
@@ -166,9 +221,10 @@ function onUpdate() {
             <UIcon name="i-lucide-hourglass" class="size-3" />
           </span>
         </UTooltip>
-      </NuxtLink>
+      </div>
 
       <CardTile
+        v-if="!inCollapsedGroup(card)"
         :card="card"
         :show-parent-key="!groupByStory"
         :class="inGroup(card) && 'mx-1.5 mb-1.5'"

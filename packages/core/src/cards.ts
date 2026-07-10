@@ -92,6 +92,12 @@ export type CardStatus = z.infer<typeof cardStatus>
  */
 export interface CardFilters extends ArchiveFilter {
   sprintId?: string | null
+  /**
+   * Restrict to a set of sprints (e.g. every active sprint of a project — the
+   * multi-active board of CO-399). Takes precedence over `sprintId`; an empty
+   * array matches no card. Ignored when `backlogOnly` is set.
+   */
+  sprintIds?: string[]
   status?: CardStatus | CardStatus[]
   activeOnly?: boolean
   tag?: string
@@ -180,6 +186,12 @@ function cardFilterConditions(
   const conditions: SQL[] = [eq(schema.cards.projectId, projectId)]
   if (filters.backlogOnly) {
     conditions.push(isNull(schema.cards.sprintId))
+  } else if (filters.sprintIds !== undefined) {
+    conditions.push(
+      filters.sprintIds.length
+        ? inArray(schema.cards.sprintId, filters.sprintIds)
+        : sql`false`
+    )
   } else if (filters.sprintId !== undefined) {
     conditions.push(
       filters.sprintId === null

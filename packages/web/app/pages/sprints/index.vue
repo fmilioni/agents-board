@@ -107,6 +107,11 @@ async function completeSprint(id: string) {
   await loadSprints()
 }
 
+async function deactivateSprint(id: string) {
+  await api(`/sprints/${id}/deactivate`, { method: 'POST' })
+  await loadSprints()
+}
+
 async function restoreSprint(id: string) {
   await api(`/sprints/${id}/restore`, { method: 'POST' })
   await loadSprints()
@@ -198,6 +203,7 @@ async function createSprint() {
               :format-date="formatDate"
               @start="startSprint(s.id)"
               @complete="completeSprint(s.id)"
+              @deactivate="deactivateSprint(s.id)"
               @reopen="reopenSprint(s.id)"
               @archived="loadSprints()"
               @destroyed="reloadAll()"

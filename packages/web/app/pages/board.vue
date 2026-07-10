@@ -2,8 +2,6 @@
 import { useProjectStore } from '~/stores/project'
 import type { Card, CardStatus } from '~/types/card'
 
-type SprintFilter = 'all' | 'sprint' | 'loose'
-
 const store = useProjectStore()
 const { currentProject, currentProjectId } = storeToRefs(store)
 const api = useApi()
@@ -14,30 +12,54 @@ onMounted(() => {
   ensureCapabilities()
 })
 
-const { data: activeSprint, refresh: refreshSprint } = useActiveSprint(
+const { data: activeSprints, refresh: refreshSprint } = useActiveSprint(
   () => currentProjectId.value
 )
 
+// A project may have several active sprints (CO-399). The inline goal editor
+// only makes sense for a single one, so it's wired to that lone active sprint
+// (null with 0 or N, hidden in the template).
+const singleActiveSprint = computed(() =>
+  activeSprints.value.length === 1 ? (activeSprints.value[0] ?? null) : null
+)
+
 const { editing, saving, justSaved } = useSprintInlineEdit(
-  activeSprint,
+  singleActiveSprint,
   (updated) => {
-    activeSprint.value = updated
+    activeSprints.value = activeSprints.value.map(s =>
+      s.id === updated.id ? updated : s
+    )
   }
 )
 
-const { cards, load: loadCards } = useBoardCards(currentProjectId, activeSprint)
+// Story-collapse toggle on the board's story envelopes (persisted per project).
+provide(boardCollapseKey, useCollapsedStories(currentProjectId))
+
+const { cards, load: loadCards } = useBoardCards(currentProjectId, activeSprints)
 const selectedTagIds = ref<string[]>([])
-const sprintFilter = ref<SprintFilter>('all')
+// The sprint filter focuses a single active sprint by id; `all` shows every
+// active sprint's cards plus the loose ones (default).
+const sprintFilter = ref<string>('all')
 const showHidden = ref(false)
 
-const sprintFilterOptions: { value: SprintFilter, label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'sprint', label: 'Sprint cards' },
-  { value: 'loose', label: 'Loose cards' }
-]
+const sprintFilterOptions = computed<{ value: string, label: string }[]>(() => [
+  { value: 'all', label: 'All sprints' },
+  ...activeSprints.value.map(s => ({ value: s.id, label: s.name }))
+])
+
+// If the focused sprint stops being active (deactivated/completed elsewhere),
+// fall back to "All" so the board doesn't silently show nothing.
+watch(activeSprints, (list) => {
+  if (
+    sprintFilter.value !== 'all'
+    && !list.some(s => s.id === sprintFilter.value)
+  ) {
+    sprintFilter.value = 'all'
+  }
+})
 
 useProjectData(currentProjectId, loadCards, {
-  watch: [currentProjectId, activeSprint],
+  watch: [currentProjectId, activeSprints],
   onEvent: (event) => {
     if (event.type === 'card.changed' || event.type === 'card.deleted') {
       loadCards()
@@ -58,8 +80,9 @@ const DAY_MS = 86_400_000
 // narrowed by the sprint and tag filters.
 const filteredCards = computed(() => {
   let list = cards.value.filter(c => c.status !== 'backlog')
-  if (sprintFilter.value === 'sprint') list = list.filter(c => c.sprintId)
-  else if (sprintFilter.value === 'loose') list = list.filter(c => !c.sprintId)
+  if (sprintFilter.value !== 'all') {
+    list = list.filter(c => c.sprintId === sprintFilter.value)
+  }
   if (selectedTagIds.value.length) {
     const sel = new Set(selectedTagIds.value)
     list = list.filter(c => c.tags?.some(t => sel.has(t.id)))
@@ -178,8 +201,19 @@ async function onMoveToBacklog(cardId: string) {
           >
             <UIcon name="i-lucide-check" /> Saved
           </span>
-          <UBadge v-if="activeSprint" color="info" variant="subtle">
-            {{ activeSprint.name }}
+          <UBadge
+            v-if="activeSprints.length === 1"
+            color="info"
+            variant="subtle"
+          >
+            {{ activeSprints[0]!.name }}
+          </UBadge>
+          <UBadge
+            v-else-if="activeSprints.length > 1"
+            color="info"
+            variant="subtle"
+          >
+            {{ activeSprints.length }} active sprints
           </UBadge>
         </template>
       </UDashboardNavbar>
@@ -191,7 +225,7 @@ async function onMoveToBacklog(cardId: string) {
       </div>
       <template v-else>
         <UTextarea
-          v-if="activeSprint"
+          v-if="singleActiveSprint"
           v-model="editing.goal"
           variant="ghost"
           :rows="1"
@@ -210,13 +244,13 @@ async function onMoveToBacklog(cardId: string) {
             @click="showHidden = !showHidden"
           />
           <USelectMenu
-            v-if="activeSprint"
+            v-if="activeSprints.length"
             :model-value="sprintFilter"
             :items="sprintFilterOptions"
             value-key="value"
             icon="i-lucide-filter"
             class="w-44"
-            @update:model-value="(v: SprintFilter) => (sprintFilter = v)"
+            @update:model-value="(v: string) => (sprintFilter = v)"
           />
           <BoardTagFilter
             v-model="selectedTagIds"

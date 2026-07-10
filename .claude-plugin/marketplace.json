@@ -9,7 +9,7 @@
     {
       "name": "claude-organizer",
       "description": "Skills do claude-organizer: usar o board (cards, comentários, docs) e planejar demandas (plan) — board exposto via MCP.",
-      "version": "0.33.1",
+      "version": "0.33.2",
       "source": "./plugins/claude-organizer",
       "category": "productivity"
     }

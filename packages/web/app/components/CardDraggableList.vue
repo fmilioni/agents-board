@@ -58,23 +58,15 @@ const orderedCards = computed<Card[]>(() => {
   return blocks.flatMap(b => b.cs)
 })
 
-const localList = ref<Card[]>([])
-watch(orderedCards, next => (localList.value = [...next]), {
+// The complete order (source of truth), synced from the data.
+const fullList = ref<Card[]>([])
+watch(orderedCards, next => (fullList.value = [...next]), {
   immediate: true,
   deep: true
 })
 
 const groupKeyOf = (c?: Card) =>
   props.groupByStory ? (c?.parentKey ?? null) : null
-const isGroupStart = (i: number) => {
-  const k = groupKeyOf(localList.value[i])
-  return k !== null && groupKeyOf(localList.value[i - 1]) !== k
-}
-const isGroupEnd = (i: number) => {
-  const k = groupKeyOf(localList.value[i])
-  return k !== null && groupKeyOf(localList.value[i + 1]) !== k
-}
-const inGroup = (c: Card) => props.groupByStory && !!c.parentKey
 
 // Story collapse (board only). Provided by the board page; absent elsewhere, so
 // the toggle doesn't render and every group stays expanded (today's behavior).
@@ -82,16 +74,67 @@ const collapse = inject(boardCollapseKey, null)
 const collapsible = computed(() => props.groupByStory && !!collapse)
 const isCollapsed = (parentKey?: string | null) =>
   !!parentKey && !!collapse?.isCollapsed(parentKey)
-// A card sits inside a collapsed story → its tile is hidden (the envelope header
-// stays, showing the count). Group-start keeps its row for the header; the other
-// children hide the whole row.
-const inCollapsedGroup = (c: Card) => inGroup(c) && isCollapsed(c.parentKey)
-const isHiddenChild = (i: number, c: Card) =>
-  inCollapsedGroup(c) && !isGroupStart(i)
 
+// A collapsed story keeps only its FIRST child in the draggable list (that row
+// renders the envelope header, its own tile hidden); the remaining children are
+// pulled OUT of the list entirely — not merely hidden — so a drop can never land
+// between them. Map: head card id → its hidden siblings, in order, re-glued right
+// after the head when the full order is rebuilt on reorder.
+const hiddenAfterHead = computed<Map<string, Card[]>>(() => {
+  const m = new Map<string, Card[]>()
+  if (!collapsible.value) return m
+  const headByKey = new Map<string, string>()
+  for (const c of fullList.value) {
+    const key = c.parentKey
+    if (!key || !isCollapsed(key)) continue
+    const head = headByKey.get(key)
+    if (head === undefined) {
+      headByKey.set(key, c.id)
+      m.set(c.id, [])
+    } else {
+      m.get(head)!.push(c)
+    }
+  }
+  return m
+})
+const hiddenIds = computed(() => {
+  const s = new Set<string>()
+  for (const kids of hiddenAfterHead.value.values()) {
+    for (const c of kids) s.add(c.id)
+  }
+  return s
+})
+
+// The draggable v-model: the full order minus each collapsed story's pulled-out
+// children (only the head remains). SortableJS mutates THIS ref on drag; the
+// hidden children are spliced back in on reorder, so nothing can drop among them.
+const visibleList = ref<Card[]>([])
+watch(
+  [fullList, hiddenIds],
+  () => {
+    visibleList.value = fullList.value.filter(c => !hiddenIds.value.has(c.id))
+  },
+  { immediate: true }
+)
+
+const isGroupStart = (i: number) => {
+  const k = groupKeyOf(visibleList.value[i])
+  return k !== null && groupKeyOf(visibleList.value[i - 1]) !== k
+}
+const isGroupEnd = (i: number) => {
+  const k = groupKeyOf(visibleList.value[i])
+  return k !== null && groupKeyOf(visibleList.value[i + 1]) !== k
+}
+const inGroup = (c: Card) => props.groupByStory && !!c.parentKey
+// A collapsed story's head keeps its row (for the envelope header) but hides its
+// own CardTile; the header's count stands in for the pulled-out children.
+const inCollapsedGroup = (c: Card) => inGroup(c) && isCollapsed(c.parentKey)
+
+// Total children per story, from the FULL list, so a collapsed head's "N tasks"
+// count includes the children pulled out of the visible list.
 const groupSizes = computed<Record<string, number>>(() => {
   const m: Record<string, number> = {}
-  for (const c of localList.value) {
+  for (const c of fullList.value) {
     if (c.parentKey) m[c.parentKey] = (m[c.parentKey] ?? 0) + 1
   }
   return m
@@ -102,7 +145,7 @@ const groupSizes = computed<Record<string, number>>(() => {
 // so its claim has nowhere else to surface). Keyed by parentKey, computed once.
 const groupClaimHints = computed<Record<string, string>>(() => {
   const childCounts = new Map<string, number>()
-  for (const c of localList.value) {
+  for (const c of fullList.value) {
     if (c.parentKey && c.claim) {
       childCounts.set(c.parentKey, (childCounts.get(c.parentKey) ?? 0) + 1)
     }
@@ -124,28 +167,36 @@ const groupClaimHints = computed<Record<string, string>>(() => {
   return hints
 })
 
-// SortableJS has already updated `localList` (v-model) by the time these fire,
-// so it reflects the dropped order. `@add` = a card came from another column
-// (carries the moved id so the page can apply status/sprint); `@update` = a
-// reorder within this list. Either way we hand the page the new order.
+// SortableJS has already updated `visibleList` (v-model) by the time the reorder
+// handlers fire. Rebuild the complete order by re-inserting each collapsed head's
+// pulled-out children right after it, so the page gets the full order to persist.
+function fullOrder(): Card[] {
+  const out: Card[] = []
+  for (const c of visibleList.value) {
+    out.push(c)
+    const kids = hiddenAfterHead.value.get(c.id)
+    if (kids) out.push(...kids)
+  }
+  return out
+}
 function onAdd(event: { data: Card }) {
   emit('reorder', {
     status: props.status,
-    orderedIds: localList.value.map(c => c.id),
+    orderedIds: fullOrder().map(c => c.id),
     movedId: event.data?.id
   })
 }
 function onUpdate() {
   emit('reorder', {
     status: props.status,
-    orderedIds: localList.value.map(c => c.id)
+    orderedIds: fullOrder().map(c => c.id)
   })
 }
 </script>
 
 <template>
   <VueDraggable
-    v-model="localList"
+    v-model="visibleList"
     :animation="150"
     group="cards"
     ghost-class="opacity-40"
@@ -156,8 +207,7 @@ function onUpdate() {
     @update="onUpdate"
   >
     <div
-      v-for="(card, i) in localList"
-      v-show="!isHiddenChild(i, card)"
+      v-for="(card, i) in visibleList"
       :key="card.id"
       class="cursor-grab active:cursor-grabbing min-w-0 shrink-0"
       :class="[
@@ -165,12 +215,12 @@ function onUpdate() {
         inGroup(card) && 'bg-elevated/40 border-x border-default',
         inGroup(card) && isGroupStart(i) && 'border-t rounded-t-lg',
         inGroup(card) && isGroupEnd(i) && 'border-b rounded-b-lg',
-        // A collapsed head is the only visible row of its group, so close the box.
-        // `co-collapsed-head` is SortableJS's drag filter: a collapsed group can't
-        // be dragged by its head (expand it to reorder) — its hidden children keep
-        // their positions, so moving just the head would be ambiguous.
+        // A collapsed head is alone in the visible list (its children are pulled
+        // out), so it's already a closed box via group-start+end. `co-collapsed-head`
+        // is SortableJS's drag filter: the head itself isn't draggable (expand the
+        // story to reorder it).
         inGroup(card) && isGroupStart(i) && isCollapsed(card.parentKey)
-          && 'border-b rounded-b-lg co-collapsed-head'
+          && 'co-collapsed-head'
       ]"
     >
       <!-- Story envelope: a tinted rail spans the group; the header sits on the

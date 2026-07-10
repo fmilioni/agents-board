@@ -1,6 +1,6 @@
 {
   "name": "@claude-organizer/embedding-service",
-  "version": "0.33.1",
+  "version": "0.33.2",
   "private": true,
   "type": "module",
   "main": "./dist/server.mjs",

@@ -114,7 +114,7 @@ async function confirmDestroy() {
     </template>
     <template #footer>
       <div class="flex justify-end gap-2 w-full">
-        <UButton variant="ghost" label="Cancel" @click="archiveOpen = false" />
+        <UButton variant="ghost" label="Cancel" @click="() => { archiveOpen = false }" />
         <UButton
           color="primary"
           icon="i-lucide-archive"
@@ -136,7 +136,7 @@ async function confirmDestroy() {
     </template>
     <template #footer>
       <div class="flex justify-end gap-2 w-full">
-        <UButton variant="ghost" label="Cancel" @click="destroyOpen = false" />
+        <UButton variant="ghost" label="Cancel" @click="() => { destroyOpen = false }" />
         <UButton
           color="error"
           icon="i-lucide-trash-2"

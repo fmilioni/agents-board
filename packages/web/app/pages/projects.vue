@@ -170,7 +170,7 @@ function openProject(slug: string) {
             icon="i-lucide-plus"
             label="New project"
             color="primary"
-            @click="createOpen = true"
+            @click="() => { createOpen = true }"
           />
         </template>
       </UDashboardNavbar>
@@ -329,7 +329,7 @@ function openProject(slug: string) {
     </template>
     <template #footer>
       <div class="flex justify-end gap-2 w-full">
-        <UButton variant="ghost" label="Cancel" @click="destroyOpen = false" />
+        <UButton variant="ghost" label="Cancel" @click="() => { destroyOpen = false }" />
         <UButton
           color="error"
           label="Destroy"

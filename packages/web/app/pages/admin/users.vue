@@ -187,7 +187,7 @@ async function confirmRemove() {
                 color="error"
                 variant="ghost"
                 label="Reject"
-                @click="removing = u"
+                @click="() => { removing = u }"
               />
               <UButton
                 v-else-if="!isSelf(u)"
@@ -197,7 +197,7 @@ async function confirmRemove() {
                 label="Remove"
                 :disabled="isLastAdmin(u)"
                 :title="isLastAdmin(u) ? 'Cannot remove the last administrator' : undefined"
-                @click="removing = u"
+                @click="() => { removing = u }"
               />
             </div>
           </li>
@@ -253,7 +253,7 @@ async function confirmRemove() {
     </template>
     <template #footer>
       <div class="flex justify-end gap-2 w-full">
-        <UButton variant="ghost" label="Cancel" @click="approving = null" />
+        <UButton variant="ghost" label="Cancel" @click="() => { approving = null }" />
         <UButton
           color="primary"
           label="Approve"
@@ -281,7 +281,7 @@ async function confirmRemove() {
     </template>
     <template #footer>
       <div class="flex justify-end gap-2 w-full">
-        <UButton variant="ghost" label="Cancel" @click="removing = null" />
+        <UButton variant="ghost" label="Cancel" @click="() => { removing = null }" />
         <UButton
           color="error"
           icon="i-lucide-trash-2"

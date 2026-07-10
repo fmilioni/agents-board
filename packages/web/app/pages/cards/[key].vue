@@ -871,7 +871,7 @@ const providerIcon = computed(() =>
                       color="neutral"
                       variant="ghost"
                       aria-label="Remove comment"
-                      @click="commentToDelete = c"
+                      @click="() => { commentToDelete = c }"
                     />
                   </div>
                 </div>
@@ -1041,7 +1041,7 @@ const providerIcon = computed(() =>
         <UButton
           variant="ghost"
           label="Cancel"
-          @click="commentToDelete = null"
+          @click="() => { commentToDelete = null }"
         />
         <UButton
           color="error"

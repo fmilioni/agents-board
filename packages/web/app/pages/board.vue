@@ -241,7 +241,7 @@ async function onMoveToBacklog(cardId: string) {
             :icon="showHidden ? 'i-lucide-eye-off' : 'i-lucide-eye'"
             color="neutral"
             :variant="showHidden ? 'subtle' : 'ghost'"
-            @click="showHidden = !showHidden"
+            @click="() => { showHidden = !showHidden }"
           />
           <USelectMenu
             v-if="activeSprints.length"

@@ -161,7 +161,7 @@ async function createSprint() {
             icon="i-lucide-plus"
             color="primary"
             label="New sprint"
-            @click="createOpen = true"
+            @click="() => { createOpen = true }"
           />
         </template>
       </UDashboardNavbar>
@@ -276,7 +276,7 @@ async function createSprint() {
     </template>
     <template #footer>
       <div class="flex justify-end gap-2 w-full">
-        <UButton variant="ghost" label="Cancel" @click="createOpen = false" />
+        <UButton variant="ghost" label="Cancel" @click="() => { createOpen = false }" />
         <UButton
           color="primary"
           label="Create"

@@ -235,7 +235,7 @@ const plannedCompleted = computed(() => planned.value.filter(i => i.completed))
                 color="neutral"
                 variant="ghost"
                 aria-label="Destroy"
-                @click="destroyTarget = item"
+                @click="() => { destroyTarget = item }"
               />
             </div>
           </div>
@@ -304,7 +304,7 @@ const plannedCompleted = computed(() => planned.value.filter(i => i.completed))
                   color="neutral"
                   variant="ghost"
                   aria-label="Destroy"
-                  @click="destroyTarget = item"
+                  @click="() => { destroyTarget = item }"
                 />
               </div>
             </div>
@@ -334,7 +334,7 @@ const plannedCompleted = computed(() => planned.value.filter(i => i.completed))
     </template>
     <template #footer>
       <div class="flex justify-end gap-2 w-full">
-        <UButton variant="ghost" label="Cancel" @click="destroyTarget = null" />
+        <UButton variant="ghost" label="Cancel" @click="() => { destroyTarget = null }" />
         <UButton
           color="error"
           icon="i-lucide-trash-2"

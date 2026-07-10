@@ -324,7 +324,7 @@ async function onDocRemoved() {
             icon="i-lucide-plus"
             color="primary"
             label="New doc"
-            @click="createOpen = true"
+            @click="() => { createOpen = true }"
           />
         </template>
       </UDashboardNavbar>
@@ -531,7 +531,7 @@ async function onDocRemoved() {
     </template>
     <template #footer>
       <div class="flex justify-end gap-2 w-full">
-        <UButton variant="ghost" label="Cancel" @click="createOpen = false" />
+        <UButton variant="ghost" label="Cancel" @click="() => { createOpen = false }" />
         <UButton
           color="primary"
           label="Create"

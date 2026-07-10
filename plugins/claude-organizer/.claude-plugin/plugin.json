@@ -2,7 +2,7 @@
   "name": "claude-organizer",
   "displayName": "Claude Organizer",
   "description": "Jira for Claude Code: task management over MCP. Ships the board skills (claude-organizer, plan, implement) and registers the remote MCP (HTTP) automatically.",
-  "version": "0.33.0",
+  "version": "0.33.1",
   "author": {
     "name": "Felipe Milioni"
   },

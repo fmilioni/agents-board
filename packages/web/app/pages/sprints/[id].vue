@@ -355,7 +355,7 @@ async function restoreCard(cardId: string) {
                     size="xs"
                     color="neutral"
                     variant="ghost"
-                    @click="archivedExpanded = false"
+                    @click="() => { archivedExpanded = false }"
                   />
                 </div>
                 <div

@@ -112,7 +112,7 @@ async function submit() {
           v-if="dismissible"
           variant="ghost"
           label="Cancel"
-          @click="open = false"
+          @click="() => { open = false }"
         />
         <UButton
           color="primary"

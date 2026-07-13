@@ -18,7 +18,10 @@ import {
 } from '../src/index'
 import { freshProject, useTestDb } from './helpers'
 
-const ctx = useTestDb()
+// Isolated DB: these tests flip the global `keepAttachmentsOnArchive` toggle, which the
+// suite's by-project isolation doesn't cover — on the shared one a parallel file reading
+// it (the archive GC of commit-images/attachment-sweep) would see this file's value.
+const ctx = useTestDb({ isolated: true })
 
 const bytes = () => Buffer.from('img', 'utf8')
 const ref = (id: string) => `body ![pic](/attachments/${id}) more`

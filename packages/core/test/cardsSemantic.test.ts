@@ -21,7 +21,9 @@ import {
 } from '../src/index'
 import { freshProject, useTestDb } from './helpers'
 
-const ctx = useTestDb()
+// Isolated DB: the backfill these tests run is db-wide (every entity missing chunks),
+// so on the shared one it would race the chunk writes of parallel test files.
+const ctx = useTestDb({ isolated: true })
 const mockedEmbed = vi.mocked(embed)
 const mockedEmbedChunks = vi.mocked(embedChunks)
 
@@ -222,14 +224,15 @@ describe('cards semantic search', () => {
     mockedEmbedChunks.mockResolvedValue([basis(0)])
     const cards = await backfillCardEmbeddings(ctx.db, 10)
     const comments = await backfillCommentEmbeddings(ctx.db, 10)
+    // Loose count: the backfill is db-wide, so it also sweeps what the other tests in
+    // this file left un-chunked.
     expect(cards).toBeGreaterThanOrEqual(1)
     expect(comments).toBeGreaterThanOrEqual(1)
     expect(await rowCount('card_chunks', 'card_id', card!.id)).toBe(1)
     expect(await rowCount('comment_chunks', 'comment_id', comment!.id)).toBe(1)
 
     // Idempotent: a second run leaves the already-chunked entities at one row each
-    // (excluded by `not exists`) — no duplicates. (The backfill is global, so its
-    // return count isn't asserted in the shared test DB.)
+    // (excluded by `not exists`) — no duplicates.
     await backfillCardEmbeddings(ctx.db, 10)
     await backfillCommentEmbeddings(ctx.db, 10)
     expect(await rowCount('card_chunks', 'card_id', card!.id)).toBe(1)

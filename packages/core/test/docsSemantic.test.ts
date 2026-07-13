@@ -18,7 +18,9 @@ import {
 } from '../src/index'
 import { freshProject, useTestDb } from './helpers'
 
-const ctx = useTestDb()
+// Isolated DB: the backfill these tests run is db-wide (every entity missing chunks),
+// so on the shared one it would race the chunk writes of parallel test files.
+const ctx = useTestDb({ isolated: true })
 const mockedEmbed = vi.mocked(embed)
 const mockedEmbedChunks = vi.mocked(embedChunks)
 
@@ -234,12 +236,13 @@ describe('docs semantic search', () => {
 
     mockedEmbedChunks.mockResolvedValue([basis(0)])
     const count = await backfillDocEmbeddings(ctx.db, 10)
+    // Loose count: the backfill is db-wide, so it also sweeps what the other tests in
+    // this file left un-chunked.
     expect(count).toBeGreaterThanOrEqual(1)
     expect(await chunkCount(doc!.id)).toBe(1)
 
     // Idempotent: the doc already has chunks, so a second run leaves it at one
-    // (it's excluded by `not exists`) — no duplicates. (The backfill is global,
-    // so its return count isn't asserted in the shared test DB.)
+    // (it's excluded by `not exists`) — no duplicates.
     await backfillDocEmbeddings(ctx.db, 10)
     expect(await chunkCount(doc!.id)).toBe(1)
   })

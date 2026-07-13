@@ -15,9 +15,11 @@ export interface UseTestDbOptions {
   /**
    * Provision a dedicated database for this file instead of sharing the suite's
    * primary one. The "isolation by data" the suite relies on (a per-test
-   * project) does NOT cover global singletons like `system_settings`, so files
-   * that mutate those would race across parallel workers. Opt in to keep their
-   * singleton private.
+   * project) does NOT cover anything db-wide: a global singleton like
+   * `system_settings`, or a global sweep like the embedding backfill (which
+   * visits every entity missing chunks, including the ones a parallel file is
+   * writing right now). Files that touch those would race across parallel
+   * workers — opt in to keep the db private.
    */
   isolated?: boolean
 }

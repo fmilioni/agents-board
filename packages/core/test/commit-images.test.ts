@@ -22,7 +22,10 @@ import {
 } from '../src/index'
 import { freshProject, uniqueKeyPrefix, useTestDb } from './helpers'
 
-const ctx = useTestDb()
+// Isolated DB: these tests flip the global `keepDiffsOnArchive` toggle, and their archive
+// assertions also depend on `keepAttachmentsOnArchive` staying at its default — see
+// attachment-gc.test.ts.
+const ctx = useTestDb({ isolated: true })
 
 async function image(projectId: string) {
   return createAttachment(ctx.db, {

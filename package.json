@@ -1,6 +1,6 @@
 {
   "name": "claude-organizer",
-  "version": "0.33.2",
+  "version": "0.33.3",
   "private": true,
   "description": "Project management system for Claude Code: cards, sprints, roadmaps, docs - exposed via MCP",
   "packageManager": "pnpm@9.12.0",

@@ -100,23 +100,43 @@ type ChunkRows = Array<{ idx: number, embedding: number[] }>
 /**
  * Persist a freshly-embedded chunk set to an entity's chunk table, honoring the
  * write invariant: `null` (embeddings off or a transient failure) keeps the
- * existing chunks untouched — never wipe valid vectors; otherwise replace them in
- * one transaction (an empty set just clears). `clear` + `insert` are the
- * table-specific delete/insert; they run against the transaction handle.
+ * existing chunks untouched — never wipe valid vectors; otherwise the entity ends
+ * up with exactly this version's chunks (an empty set just clears).
+ *
+ * Upsert-then-truncate rather than delete-then-insert: the backfill may be inserting
+ * this same entity's chunks right now, and rows it commits after our delete already
+ * read them would collide with a plain insert — killing the *editor's* write. Writing
+ * by `(owner, idx)` and then dropping the tail beyond this version's last chunk lands
+ * the same final state under every interleaving, so the editor always wins.
+ * `upsert` + `truncateFrom` are the table-specific writes, run on the transaction.
  */
 export async function applyChunks(
   db: Database,
   vectors: number[][] | null,
-  clear: (tx: Database) => Promise<unknown>,
-  insert: (tx: Database, rows: ChunkRows) => Promise<unknown>
+  truncateFrom: (tx: Database, fromIdx: number) => Promise<unknown>,
+  upsert: (tx: Database, rows: ChunkRows) => Promise<unknown>
 ): Promise<void> {
   if (vectors === null) return
   await db.transaction(async (tx) => {
-    await clear(tx)
     if (vectors.length) {
-      await insert(tx, vectors.map((embedding, idx) => ({ idx, embedding })))
+      await upsert(tx, vectors.map((embedding, idx) => ({ idx, embedding })))
     }
+    await truncateFrom(tx, vectors.length)
   })
+}
+
+/**
+ * The two ways a concurrent change makes a chunk insert impossible: the rows already
+ * exist (`unique_violation` — someone re-chunked the entity) or the owner is gone
+ * (`foreign_key_violation` — it was deleted). Drizzle wraps the driver error, so the
+ * code is looked for down the `cause` chain.
+ */
+function isConcurrencyConflict(err: unknown): boolean {
+  for (let e: unknown = err; e instanceof Error; e = e.cause) {
+    const code = (e as { code?: unknown }).code
+    if (code === '23505' || code === '23503') return true
+  }
+  return false
 }
 
 /**
@@ -133,12 +153,22 @@ export async function applyChunks(
  * termination: a row whose content embeds to `[]` (empty/whitespace-only) stores
  * nothing and stays in the candidate set, so re-querying it would loop forever —
  * advancing `afterId` past each batch steps over it instead.
+ *
+ * Embedding an entity is a slow network call, and the rest of the system stays free to
+ * rewrite or delete it meanwhile — that version is newer, so it owns the chunks and the
+ * backfill yields (uncounted, nothing written) instead of dying. Two ways to detect it,
+ * because a rewrite doesn't always leave rows to collide with: `currentText` re-reads
+ * the entity and yields when the content moved on or it's gone (a rewrite to blank
+ * stores no chunks at all, so it would never collide), and a conflict from `store`
+ * covers the change landing inside that last window — a unique violation rolls the whole
+ * INSERT statement back on the shared `(owner, idx)` PK, never leaving a mixed set.
  */
 export async function backfillChunks(
   batchSize: number,
   fetchBatch: (limit: number, afterId: string | null) => Promise<Array<{ id: string, text: string }>>,
   embedFn: (text: string) => Promise<number[][] | null>,
-  store: (id: string, vectors: number[][]) => Promise<unknown>
+  store: (id: string, vectors: number[][]) => Promise<unknown>,
+  currentText: (id: string) => Promise<string | null>
 ): Promise<number> {
   let total = 0
   let afterId: string | null = null
@@ -148,9 +178,13 @@ export async function backfillChunks(
     for (const row of rows) {
       const vectors = await embedFn(row.text)
       if (vectors === null) return total
-      if (vectors.length) {
+      if (!vectors.length) continue
+      if (await currentText(row.id) !== row.text) continue
+      try {
         await store(row.id, vectors)
         total++
+      } catch (err) {
+        if (!isConcurrencyConflict(err)) throw err
       }
     }
     afterId = rows[rows.length - 1]!.id

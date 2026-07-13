@@ -4,6 +4,7 @@ import {
   desc,
   eq,
   gt,
+  gte,
   ilike,
   inArray,
   isNull,
@@ -539,19 +540,21 @@ async function nearestCommentSnippets(
   return map
 }
 
+const cardContentColumns = {
+  id: schema.cards.id,
+  key: schema.cards.key,
+  title: schema.cards.title,
+  summary: schema.cards.summary,
+  descriptionMd: schema.cards.descriptionMd
+}
+
 /** Backfill chunks for cards that have none yet. See `backfillChunks`. */
 export function backfillCardEmbeddings(db: Database, batchSize = 50): Promise<number> {
   return backfillChunks(
     batchSize,
     async (limit, afterId) => {
       const rows = await db
-        .select({
-          id: schema.cards.id,
-          key: schema.cards.key,
-          title: schema.cards.title,
-          summary: schema.cards.summary,
-          descriptionMd: schema.cards.descriptionMd
-        })
+        .select(cardContentColumns)
         .from(schema.cards)
         .where(
           and(
@@ -565,7 +568,11 @@ export function backfillCardEmbeddings(db: Database, batchSize = 50): Promise<nu
     },
     embedChunks,
     (id, vectors) =>
-      db.insert(schema.cardChunks).values(vectors.map((embedding, idx) => ({ cardId: id, idx, embedding })))
+      db.insert(schema.cardChunks).values(vectors.map((embedding, idx) => ({ cardId: id, idx, embedding }))),
+    async (id) => {
+      const [row] = await db.select(cardContentColumns).from(schema.cards).where(eq(schema.cards.id, id))
+      return row ? cardContentText(row) : null
+    }
   )
 }
 
@@ -700,9 +707,18 @@ function writeCardChunks(db: Database, cardId: string, vectors: number[][] | nul
   return applyChunks(
     db,
     vectors,
-    tx => tx.delete(schema.cardChunks).where(eq(schema.cardChunks.cardId, cardId)),
+    (tx, fromIdx) =>
+      tx
+        .delete(schema.cardChunks)
+        .where(and(eq(schema.cardChunks.cardId, cardId), gte(schema.cardChunks.idx, fromIdx))),
     (tx, rows) =>
-      tx.insert(schema.cardChunks).values(rows.map(r => ({ cardId, idx: r.idx, embedding: r.embedding })))
+      tx
+        .insert(schema.cardChunks)
+        .values(rows.map(r => ({ cardId, idx: r.idx, embedding: r.embedding })))
+        .onConflictDoUpdate({
+          target: [schema.cardChunks.cardId, schema.cardChunks.idx],
+          set: { embedding: sql`excluded.embedding` }
+        })
   )
 }
 

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, ilike, inArray, isNotNull, notInArray, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, gte, ilike, inArray, isNotNull, notInArray, or, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { createId, type Database, schema } from '@claude-organizer/db'
@@ -155,9 +155,18 @@ function writeDocChunks(db: Database, docId: string, vectors: number[][] | null)
   return applyChunks(
     db,
     vectors,
-    tx => tx.delete(schema.docChunks).where(eq(schema.docChunks.docId, docId)),
+    (tx, fromIdx) =>
+      tx
+        .delete(schema.docChunks)
+        .where(and(eq(schema.docChunks.docId, docId), gte(schema.docChunks.idx, fromIdx))),
     (tx, rows) =>
-      tx.insert(schema.docChunks).values(rows.map(r => ({ docId, idx: r.idx, embedding: r.embedding })))
+      tx
+        .insert(schema.docChunks)
+        .values(rows.map(r => ({ docId, idx: r.idx, embedding: r.embedding })))
+        .onConflictDoUpdate({
+          target: [schema.docChunks.docId, schema.docChunks.idx],
+          set: { embedding: sql`excluded.embedding` }
+        })
   )
 }
 
@@ -361,18 +370,20 @@ export async function searchDocs(
   return pageIds.map(id => byId.get(id)).filter(row => row !== undefined)
 }
 
+const docContentColumns = {
+  id: schema.docs.id,
+  title: schema.docs.title,
+  summary: schema.docs.summary,
+  bodyMd: schema.docs.bodyMd
+}
+
 /** Backfill chunks for docs that have none yet. See `backfillChunks`. */
 export function backfillDocEmbeddings(db: Database, batchSize = 50): Promise<number> {
   return backfillChunks(
     batchSize,
     async (limit, afterId) => {
       const rows = await db
-        .select({
-          id: schema.docs.id,
-          title: schema.docs.title,
-          summary: schema.docs.summary,
-          bodyMd: schema.docs.bodyMd
-        })
+        .select(docContentColumns)
         .from(schema.docs)
         .where(
           and(
@@ -386,6 +397,10 @@ export function backfillDocEmbeddings(db: Database, batchSize = 50): Promise<num
     },
     embedChunks,
     (id, vectors) =>
-      db.insert(schema.docChunks).values(vectors.map((embedding, idx) => ({ docId: id, idx, embedding })))
+      db.insert(schema.docChunks).values(vectors.map((embedding, idx) => ({ docId: id, idx, embedding }))),
+    async (id) => {
+      const [row] = await db.select(docContentColumns).from(schema.docs).where(eq(schema.docs.id, id))
+      return row ? docContentText(row) : null
+    }
   )
 }

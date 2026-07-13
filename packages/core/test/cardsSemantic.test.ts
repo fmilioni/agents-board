@@ -236,6 +236,68 @@ describe('cards semantic search', () => {
     expect(await rowCount('comment_chunks', 'comment_id', comment!.id)).toBe(1)
   })
 
+  it('backfill yields the entity a concurrent write chunked while it was embedding, and scans on', async () => {
+    const project = await freshProject(ctx.db)
+    const a = await createCard(ctx.db, { projectId: project.id, title: 'corrida do backfill A' })
+    const b = await createCard(ctx.db, { projectId: project.id, title: 'corrida do backfill B' })
+    const byTitle = new Map([
+      ['corrida do backfill A', a!.id],
+      ['corrida do backfill B', b!.id]
+    ])
+
+    // The mock stands in for the slow embed call: it runs between the backfill's
+    // select and its store, exactly where the editor's write lands. It hijacks
+    // whichever of the two the scan reaches FIRST (ids are random, so the keyset
+    // order isn't ours to pick) — so the other one only gets chunks if the scan
+    // survived the yield. Every other card in the db chunks to nothing, keeping the
+    // returned count about these two.
+    let hijacked: string | null = null
+    mockedEmbedChunks.mockImplementation(async (text) => {
+      const title = [...byTitle.keys()].find(t => text.includes(t))
+      if (!title) return []
+      if (hijacked === null) {
+        hijacked = title
+        await seedCard(byTitle.get(title)!, 7) // the editor's write commits — newer content wins
+      }
+      return [basis(0)]
+    })
+
+    const count = await backfillCardEmbeddings(ctx.db, 10)
+
+    const yielded = byTitle.get(hijacked!)!
+    const scannedOn = yielded === a!.id ? b!.id : a!.id
+    expect(count).toBe(1) // the yielded entity isn't counted; the next one still is
+    expect(await rowCount('card_chunks', 'card_id', yielded)).toBe(1)
+    expect(await rowCount('card_chunks', 'card_id', scannedOn)).toBe(1)
+    const rows = (await ctx.db.execute(
+      sql`select embedding::text as v from card_chunks where card_id = ${yielded}`
+    )) as unknown as Array<{ v: string }>
+    expect(rows[0]?.v).toBe(vecLiteral(7)) // the write's vector, not the backfill's
+  })
+
+  it('backfill yields an entity a concurrent write blanked — no chunks to collide with', async () => {
+    const project = await freshProject(ctx.db)
+    const card = await createCard(ctx.db, { projectId: project.id, title: 'C' })
+    const comment = await addComment(ctx.db, {
+      cardId: card!.id,
+      author: 'user',
+      bodyMd: 'corpo que será apagado durante o backfill'
+    })
+
+    // Blanking the body stores NO chunks, so the backfill's insert would hit no
+    // conflict — the stale vectors would land on content that no longer exists.
+    mockedEmbedChunks.mockImplementation(async (text) => {
+      if (!text.includes('corpo que será apagado')) return []
+      await updateComment(ctx.db, { id: comment!.id, bodyMd: '   ' })
+      return [basis(0)]
+    })
+
+    const count = await backfillCommentEmbeddings(ctx.db, 10)
+
+    expect(count).toBe(0)
+    expect(await rowCount('comment_chunks', 'comment_id', comment!.id)).toBe(0)
+  })
+
   it('backfill terminates on whitespace-only content (keyset cursor, no infinite loop)', async () => {
     const project = await freshProject(ctx.db)
     const card = await createCard(ctx.db, { projectId: project.id, title: 'C' })

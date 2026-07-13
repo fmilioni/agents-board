@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, inArray, ne, sql } from 'drizzle-orm'
+import { and, asc, eq, gt, gte, inArray, ne, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { createId, type Database, schema } from '@claude-organizer/db'
@@ -156,9 +156,18 @@ function writeCommentChunks(db: Database, commentId: string, vectors: number[][]
   return applyChunks(
     db,
     vectors,
-    tx => tx.delete(schema.commentChunks).where(eq(schema.commentChunks.commentId, commentId)),
+    (tx, fromIdx) =>
+      tx
+        .delete(schema.commentChunks)
+        .where(and(eq(schema.commentChunks.commentId, commentId), gte(schema.commentChunks.idx, fromIdx))),
     (tx, rows) =>
-      tx.insert(schema.commentChunks).values(rows.map(r => ({ commentId, idx: r.idx, embedding: r.embedding })))
+      tx
+        .insert(schema.commentChunks)
+        .values(rows.map(r => ({ commentId, idx: r.idx, embedding: r.embedding })))
+        .onConflictDoUpdate({
+          target: [schema.commentChunks.commentId, schema.commentChunks.idx],
+          set: { embedding: sql`excluded.embedding` }
+        })
   )
 }
 
@@ -274,7 +283,14 @@ export function backfillCommentEmbeddings(db: Database, batchSize = 50): Promise
     },
     embedChunks,
     (id, vectors) =>
-      db.insert(schema.commentChunks).values(vectors.map((embedding, idx) => ({ commentId: id, idx, embedding })))
+      db.insert(schema.commentChunks).values(vectors.map((embedding, idx) => ({ commentId: id, idx, embedding }))),
+    async (id) => {
+      const [row] = await db
+        .select({ bodyMd: schema.comments.bodyMd })
+        .from(schema.comments)
+        .where(eq(schema.comments.id, id))
+      return row?.bodyMd ?? null
+    }
   )
 }
 

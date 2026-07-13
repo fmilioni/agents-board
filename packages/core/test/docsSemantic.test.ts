@@ -49,6 +49,13 @@ async function chunkCount(docId: string): Promise<number> {
   return rows[0]?.n ?? 0
 }
 
+async function chunkVector(docId: string, idx: number): Promise<string | null> {
+  const rows = (await ctx.db.execute(
+    sql`select embedding::text as v from doc_chunks where doc_id = ${docId} and idx = ${idx}`
+  )) as unknown as Array<{ v: string }>
+  return rows[0]?.v ?? null
+}
+
 beforeEach(() => {
   mockedEmbed.mockReset()
   mockedEmbed.mockResolvedValue(null) // default: search query falls back to lexical
@@ -185,9 +192,23 @@ describe('docs semantic search', () => {
     const doc = await createDoc(ctx.db, { projectId: project.id, title: 'v1', bodyMd: 'longo' })
     expect(await chunkCount(doc!.id)).toBe(3)
 
-    mockedEmbedChunks.mockResolvedValue([basis(0)]) // shorter content → fewer chunks
+    mockedEmbedChunks.mockResolvedValue([basis(5)]) // shorter content → fewer chunks
     await updateDoc(ctx.db, { id: doc!.id, bodyMd: 'curto' })
     expect(await chunkCount(doc!.id)).toBe(1)
+    // The write overwrites idx 0 in place (upsert), so a kept row must carry the NEW
+    // vector — a chunk count alone wouldn't catch the edit silently keeping the old one.
+    expect(await chunkVector(doc!.id, 0)).toBe(vecLiteral(5))
+  })
+
+  it('clears every chunk when an edit blanks the content', async () => {
+    mockedEmbedChunks.mockResolvedValue([basis(0), basis(1)])
+    const project = await freshProject(ctx.db)
+    const doc = await createDoc(ctx.db, { projectId: project.id, title: 'v1', bodyMd: 'corpo' })
+    expect(await chunkCount(doc!.id)).toBe(2)
+
+    mockedEmbedChunks.mockResolvedValue([]) // nothing left to embed
+    await updateDoc(ctx.db, { id: doc!.id, bodyMd: '' })
+    expect(await chunkCount(doc!.id)).toBe(0)
   })
 
   it('keeps existing chunks when a re-embed fails (null does not wipe vectors)', async () => {

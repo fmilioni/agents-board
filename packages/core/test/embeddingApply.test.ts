@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // Record the ordering of reconcile / reload / backfill. backfillDoc/Card/Comment
 // all funnel through the `backfillChunks` primitive in `../src/embedding`, so
 // mocking that module intercepts the reload push and every backfill; reconcile is
-// mocked separately (in `@claude-organizer/db`) so it records without touching the
-// real, shared `vector(N)` column — a real dim change would break sibling suites.
+// mocked separately (in `@claude-organizer/db`) so it records its call without
+// rewriting the `vector(N)` column for real.
 const { calls, reloadMock } = vi.hoisted(() => ({
   calls: [] as string[],
   reloadMock: vi.fn(async () => {
@@ -48,9 +48,7 @@ import {
 } from '../src/index'
 import { useTestDb } from './helpers'
 
-// Isolated DB: these tests mutate the global `system_settings` singleton, which
-// the suite's by-project isolation doesn't cover (would race authz.test.ts).
-const ctx = useTestDb({ isolated: true })
+const ctx = useTestDb()
 
 async function settle(db: Database) {
   for (let i = 0; i < 200; i++) {

@@ -23,9 +23,7 @@ import {
 } from '../src/index'
 import { freshProject, useTestDb } from './helpers'
 
-// Isolated DB: these tests flip the global `includeAttachmentsInBackup` toggle — see
-// attachment-gc.test.ts.
-const ctx = useTestDb({ isolated: true })
+const ctx = useTestDb()
 
 async function seedProject() {
   const project = await freshProject(ctx.db)
@@ -391,8 +389,8 @@ describe('importBackup — restore as new', () => {
       height: 2
     })
 
-    // The toggle is a global singleton shared across parallel test files; reset
-    // it in finally so a failed assertion can't leak OFF into other exports.
+    // The toggle is a db-wide singleton; reset it in finally so a failed
+    // assertion can't leak OFF into the file's later exports.
     await setIncludeAttachmentsInBackup(ctx.db, false)
     try {
       const env = await exportProject(ctx.db, project.id)

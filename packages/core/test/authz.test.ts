@@ -33,14 +33,9 @@ import {
 } from '../src/index'
 import { freshProject, uniqueKeyPrefix, useTestDb } from './helpers'
 
-// Isolated DB: the system-settings tests below read/write the global
-// `system_settings` singleton, which the suite's by-project isolation doesn't
-// cover — sharing it would race embeddingApply.test.ts across parallel workers.
-const ctx = useTestDb({ isolated: true })
+const ctx = useTestDb()
 
-// This is the only suite that touches users/user_authz, so wiping users (which
-// cascades to user_authz) between cases is safe even with the shared ephemeral
-// Postgres — no other test file writes these tables.
+// Wiping users cascades to user_authz.
 beforeEach(async () => {
   await ctx.db.delete(schema.users)
 })
@@ -309,11 +304,9 @@ describe('system settings', () => {
   })
 })
 
-// Co-located with the system-settings tests so the shared singleton row mutates
-// sequentially (no cross-file race). These cases never change the column dim
-// (the suite runs with EMBEDDING_MODEL=none, so none/null stay at 384) — a real
-// dim-change reconcile would mutate the global pgvector column and flake the
-// parallel embedding-foundation test, so that path is validated functionally.
+// These cases never change the column dim (the suite runs with
+// EMBEDDING_MODEL=none, so none/null stay at 384) — the reconcile path itself is
+// covered in embeddingApply.test.ts.
 describe('embedding runtime apply', () => {
   async function settle(db: typeof ctx.db) {
     for (let i = 0; i < 100; i++) {

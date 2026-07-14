@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { sql } from 'drizzle-orm'
 import { afterAll, beforeAll, inject } from 'vitest'
 
-import { createDb, type Database, runMigrations } from '@claude-organizer/db'
+import { createDb, type Database } from '@claude-organizer/db'
 
 import { createProject } from '../src/index'
 
@@ -11,40 +11,29 @@ export interface TestDb {
   db: Database
 }
 
-export interface UseTestDbOptions {
-  /**
-   * Provision a dedicated database for this file instead of sharing the suite's
-   * primary one. The "isolation by data" the suite relies on (a per-test
-   * project) does NOT cover anything db-wide: a global singleton like
-   * `system_settings`, or a global sweep like the embedding backfill (which
-   * visits every entity missing chunks, including the ones a parallel file is
-   * writing right now). Files that touch those would race across parallel
-   * workers — opt in to keep the db private.
-   */
-  isolated?: boolean
-}
-
 /**
- * Opens a connection to the suite's ephemeral Postgres for the current test
- * file and closes it afterwards. Call at the top level of a test file.
+ * Provisions a database of its own for the current test file — cloned from the
+ * suite's already-migrated template — and closes the connection afterwards.
+ * Call at the top level of a test file.
+ *
+ * A database per file (never a shared one) is what keeps db-wide state safe:
+ * the by-project isolation the tests rely on doesn't cover a global singleton
+ * (`system_settings`) or a global sweep (the embedding backfill), so files
+ * touching those would race across Vitest's parallel workers.
  */
-export function useTestDb(options: UseTestDbOptions = {}): TestDb {
+export function useTestDb(): TestDb {
   const ctx: TestDb = {} as TestDb
-  let close: () => Promise<void>
+  let close: (() => Promise<void>) | undefined
 
   beforeAll(async () => {
     const baseUrl = inject('databaseUrl')
-    if (!options.isolated) {
-      const conn = createDb({ url: baseUrl })
-      ctx.db = conn.db
-      close = conn.close
-      return
-    }
+    const name = `test_${randomUUID().replace(/-/g, '').slice(0, 20)}`
 
-    const name = `iso_${randomUUID().replace(/-/g, '').slice(0, 20)}`
     const admin = createDb({ url: baseUrl, max: 1 })
     try {
-      await admin.db.execute(sql.raw(`CREATE DATABASE ${name}`))
+      await admin.db.execute(
+        sql.raw(`CREATE DATABASE ${name} TEMPLATE ${inject('templateDb')}`)
+      )
     } finally {
       await admin.close()
     }
@@ -52,13 +41,14 @@ export function useTestDb(options: UseTestDbOptions = {}): TestDb {
     const url = new URL(baseUrl)
     url.pathname = `/${name}`
     const conn = createDb({ url: url.toString() })
-    await runMigrations(conn.db)
     ctx.db = conn.db
     close = conn.close
   })
 
   afterAll(async () => {
-    await close()
+    // A failed CREATE DATABASE leaves nothing to close — and swallowing it here
+    // as `close is not a function` would bury the real Postgres error.
+    await close?.()
   })
 
   return ctx
@@ -66,8 +56,7 @@ export function useTestDb(options: UseTestDbOptions = {}): TestDb {
 
 /**
  * Create an isolated project so each test operates in its own namespace.
- * The slug uses a random UUID so it stays unique even when test files run in
- * parallel workers (Vitest's default).
+ * The slug uses a random UUID so the projects a file creates never collide.
  */
 export function freshProject(db: Database, keyPrefix = 'CO') {
   const suffix = randomUUID().replace(/-/g, '').slice(0, 12)
@@ -79,11 +68,11 @@ export function freshProject(db: Database, keyPrefix = 'CO') {
 }
 
 /**
- * A globally-unique key prefix. Card keys are unique only per project
- * (`cards_project_key_uk`), so a key like `CO-1` repeats across the many
- * default-prefix projects parallel test files create. Tests that resolve a card
- * BY KEY (`attachCardCommit`, `getCardByKey`) must use this, or the lookup may
- * hit another file's same-key card and flake.
+ * A unique key prefix. Card keys are unique only per project
+ * (`cards_project_key_uk`), but `getCardByKey` / `attachCardCommit` resolve a
+ * card BY KEY alone — so `CO-1` is ambiguous across the several default-prefix
+ * projects a single file creates. Tests that go through those paths must use
+ * this, or the lookup may hit another test's same-key card.
  */
 export function uniqueKeyPrefix() {
   return `T${randomUUID().replace(/-/g, '').slice(0, 7).toUpperCase()}`

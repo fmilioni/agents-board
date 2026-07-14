@@ -370,8 +370,8 @@ describe('listCards focused filters', () => {
 
 describe('getCardsByIds batch read', () => {
   it('returns full cards (with descriptionMd) by id, key, or a mix', async () => {
-    // Resolves cards BY KEY, so use a globally-unique prefix — the default 'CO'
-    // repeats across parallel test projects and would match the wrong cards.
+    // Resolves cards BY KEY, so use a unique prefix — the default 'CO' repeats
+    // across the file's projects and would match the wrong cards.
     const project = await freshProject(ctx.db, uniqueKeyPrefix())
     const a = await createCard(ctx.db, {
       projectId: project.id,

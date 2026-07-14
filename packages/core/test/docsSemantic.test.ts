@@ -18,9 +18,7 @@ import {
 } from '../src/index'
 import { freshProject, useTestDb } from './helpers'
 
-// Isolated DB: the backfill these tests run is db-wide (every entity missing chunks),
-// so on the shared one it would race the chunk writes of parallel test files.
-const ctx = useTestDb({ isolated: true })
+const ctx = useTestDb()
 const mockedEmbed = vi.mocked(embed)
 const mockedEmbedChunks = vi.mocked(embedChunks)
 

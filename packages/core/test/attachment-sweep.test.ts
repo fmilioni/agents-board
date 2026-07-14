@@ -14,9 +14,7 @@ import {
 } from '../src/index'
 import { freshProject, useTestDb } from './helpers'
 
-// Isolated DB: these tests flip the global `keepAttachmentsOnArchive` toggle — see
-// attachment-gc.test.ts.
-const ctx = useTestDb({ isolated: true })
+const ctx = useTestDb()
 
 const ref = (id: string) => `body ![pic](/attachments/${id}) more`
 

@@ -9,8 +9,8 @@ const ctx = useTestDb()
 
 describe('listCardCommits ordering', () => {
   it('lists real commits oldest→newest with the working-tree sentinel last', async () => {
-    // attachCardCommit resolves the card by key alone; a unique prefix keeps
-    // this card's key from colliding with another parallel file's card.
+    // attachCardCommit resolves the card by key alone — a unique prefix keeps
+    // this card's key unambiguous (see `uniqueKeyPrefix`).
     const project = await freshProject(ctx.db, uniqueKeyPrefix())
     const card = await createCard(ctx.db, {
       projectId: project.id,

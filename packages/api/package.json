@@ -1,6 +1,6 @@
 {
   "name": "@claude-organizer/api",
-  "version": "0.33.3",
+  "version": "0.33.4",
   "private": true,
   "type": "module",
   "main": "./dist/server.mjs",

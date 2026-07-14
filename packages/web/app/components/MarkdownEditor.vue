@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { EditorToolbarItem } from '@nuxt/ui'
+import { Image } from '@tiptap/extension-image'
 import { TaskItem, TaskList } from '@tiptap/extension-list'
 
 // Reusable markdown editor (TipTap via UEditor): the standard toolbar + shared
@@ -101,32 +102,50 @@ const editorProps = {
     const at = view.posAtCoords({ left: event.clientX, top: event.clientY })
     uploadAndInsert(view, files, at?.pos)
     return true
-  },
-  // The node attr `src` stays the portable relative path (markdown serializes from
-  // it); the rendered <img> gets the resolved, auth-aware absolute src.
-  nodeViews: {
-    image(node: { attrs: { src?: string, alt?: string } }) {
-      const dom = document.createElement('img')
-      dom.draggable = false
-      if (node.attrs.alt) dom.alt = node.attrs.alt
-      const src = node.attrs.src
-      if (src) {
-        resolveDisplaySrc(src)
-          .then((resolved) => {
-            dom.src = resolved
-          })
-          .catch(() => {})
-      }
-      // The async `src` set is a DOM mutation ProseMirror would otherwise read back
-      // into the doc; ignore it so it doesn't redraw or revert the node.
-      return { dom, ignoreMutation: () => true }
-    }
   }
 }
 
+// The node's `src` attr stays the portable path the markdown serializes from, so only
+// the rendered <img> gets the resolved (absolute, signed) src — the same split the
+// <AppMarkdown> preview makes. This MUST be installed as a real extension: TipTap
+// overwrites the `nodeViews` key of `editorProps` with the ones its extensions declare,
+// so a node view passed there is silently dropped — which is why images never rendered
+// in the editor. The <img> sits in a wrapper because a vanished attachment replaces it
+// with the placeholder; `data-node-view-wrapper` opts the wrapper out of the theme's
+// block-selection tint, and the editor's `ui.base` draws the selection outline on the
+// <img> inside instead.
+const ImageWithResolvedSrc = Image.extend({
+  addNodeView() {
+    return ({ node }) => {
+      const dom = document.createElement('div')
+      dom.setAttribute('data-node-view-wrapper', '')
+      const img = document.createElement('img')
+      img.draggable = false
+      const { src, alt, title } = node.attrs as { src?: string, alt?: string, title?: string }
+      if (alt) img.alt = alt
+      if (title) img.title = title
+      dom.append(img)
+      if (src) {
+        resolveAttachmentImage(src, resolveDisplaySrc).then((resolved) => {
+          if (resolved.status === 'ok') img.src = resolved.url
+          else if (resolved.status !== 'unresolved') {
+            img.replaceWith(makeAttachmentPlaceholder(resolved.status))
+          }
+        })
+      }
+      return { dom }
+    }
+  }
+})
+
+// The theme outlines a selected image via `img.ProseMirror-selectednode`, but the node
+// view's wrapper is what ProseMirror marks — so re-target the outline at the <img> in it.
+const SELECTED_IMAGE
+  = '[&_[data-node-view-wrapper].ProseMirror-selectednode_img]:outline-2 [&_[data-node-view-wrapper].ProseMirror-selectednode_img]:outline-primary'
+
 // StarterKit has no task-list node, so `- [ ]` would round-trip as escaped text
 // (`\[ \]`); TaskList/TaskItem add the node + their own GFM parse/serialize.
-const extensions = [TaskList, TaskItem.configure({ nested: true })]
+const extensions = [TaskList, TaskItem.configure({ nested: true }), ImageWithResolvedSrc]
 
 // Array-of-arrays: UEditorToolbar draws a separator between each group.
 const toolbarItems: EditorToolbarItem[][] = [
@@ -206,11 +225,12 @@ function toggleSource() {
       v-model="model"
       content-type="markdown"
       :extensions="extensions"
+      :image="false"
       :autofocus="autofocus ? 'end' : false"
       :placeholder="placeholder"
       :editor-props="editorProps"
       :style="{ minHeight }"
-      :ui="{ base: `px-3! py-2 [&_[data-type=horizontalRule]]:my-4! [&_[data-type=horizontalRule]]:py-0! [&_[data-type=horizontalRule]_hr]:my-0 ${PROSE}` }"
+      :ui="{ base: `px-3! py-2 [&_[data-type=horizontalRule]]:my-4! [&_[data-type=horizontalRule]]:py-0! [&_[data-type=horizontalRule]_hr]:my-0 ${SELECTED_IMAGE} ${PROSE}` }"
     >
       <div class="flex items-center border-b border-default bg-elevated/30">
         <UEditorToolbar

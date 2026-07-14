@@ -1,7 +1,5 @@
 import { useProjectStore } from '~/stores/project'
 
-const ATTACHMENT_ID = /att_[0-9a-z]{12}/
-
 export function useAttachments() {
   const api = useApi()
   const store = useProjectStore()
@@ -28,14 +26,14 @@ export function useAttachments() {
   async function resolveDisplay(
     stored: string
   ): Promise<{ url: string, byteSize?: number, width?: number, height?: number }> {
-    const match = ATTACHMENT_ID.exec(stored)
-    if (!match) return { url: stored }
+    const id = attachmentIdFrom(stored)
+    if (!id) return { url: stored }
     const { url, byteSize, width, height } = await api<{
       url: string
       byteSize?: number
       width?: number
       height?: number
-    }>(`/attachments/${match[0]}/url`)
+    }>(`/attachments/${id}/url`)
     return { url: `${base}${url}`, byteSize, width, height }
   }
 

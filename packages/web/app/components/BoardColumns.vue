@@ -27,15 +27,26 @@ const emit = defineEmits<{
 const backlogExpanded = ref(props.backlogStartExpanded)
 const blockedExpanded = ref(false)
 
-// A card that is the parent (story) of another loaded card becomes an envelope:
-// hidden from the columns, its title surfaced in the group header.
+// A card that is the parent (story) of another loaded STATUS card becomes an
+// envelope in the columns: hidden from the columns, its title in the group header.
 const parentIds = computed(
   () => new Set(props.cards.map(c => c.parentId).filter((id): id is string => !!id))
 )
+
+// Story parents referenced by ANY loaded card — status columns AND the backlog
+// peek — so envelope headers resolve in both and a story whose children sit in
+// the backlog still renders as an envelope there (CO-414).
+const allCards = computed(() => [...props.cards, ...(props.backlog ?? [])])
+const envelopeIds = computed(
+  () =>
+    new Set(
+      allCards.value.map(c => c.parentId).filter((id): id is string => !!id)
+    )
+)
 const parentTitles = computed(() => {
   const m: Record<string, string> = {}
-  for (const c of props.cards) {
-    if (parentIds.value.has(c.id)) m[c.key] = c.title
+  for (const c of allCards.value) {
+    if (envelopeIds.value.has(c.id)) m[c.key] = c.title
   }
   return m
 })
@@ -44,11 +55,27 @@ const parentTitles = computed(() => {
 // nowhere to show — surface it on the envelope header (keyed by the story key).
 const parentClaims = computed(() => {
   const m: Record<string, CardClaim> = {}
-  for (const c of props.cards) {
-    if (parentIds.value.has(c.id) && c.claim) m[c.key] = c.claim
+  for (const c of allCards.value) {
+    if (envelopeIds.value.has(c.id) && c.claim) m[c.key] = c.claim
   }
   return m
 })
+
+// The backlog peek, minus any story parent that groups children HERE — it renders
+// as an envelope, never as a loose tile beside its kids. Scoped to backlog-child
+// parents only: a story parked in the backlog whose children live in a status
+// column has no envelope here, so it must stay a loose tile (not vanish).
+const backlogParentIds = computed(
+  () =>
+    new Set(
+      (props.backlog ?? [])
+        .map(c => c.parentId)
+        .filter((id): id is string => !!id)
+    )
+)
+const backlogList = computed(() =>
+  (props.backlog ?? []).filter(c => !backlogParentIds.value.has(c.id))
+)
 
 const columns = computed<Record<CardStatus, Card[]>>(() => {
   const grouped: Record<CardStatus, Card[]> = {
@@ -78,8 +105,11 @@ const columns = computed<Record<CardStatus, Card[]>>(() => {
     <template v-if="backlog">
       <BacklogColumn
         v-if="backlogExpanded"
-        :cards="backlog"
+        :cards="backlogList"
         :closable="backlogClosable"
+        group-by-story
+        :parent-titles="parentTitles"
+        :parent-claims="parentClaims"
         @card-moved-to-backlog="(id: string) => emit('move-to-backlog', id)"
         @close="backlogExpanded = false"
       />
@@ -87,7 +117,7 @@ const columns = computed<Record<CardStatus, Card[]>>(() => {
         v-else
         icon="i-lucide-inbox"
         label="Backlog"
-        :count="backlog.length"
+        :count="backlogList.length"
         @expand="backlogExpanded = true"
       />
     </template>

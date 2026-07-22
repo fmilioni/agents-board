@@ -717,6 +717,14 @@ const providerIcon = computed(() =>
                 >
                   <span class="font-mono font-bold mr-1.5">{{ s.key }}</span>{{ s.title }}
                 </NuxtLink>
+                <div v-if="s.tags.length" class="flex items-center gap-1 shrink-0">
+                  <TagBadge
+                    v-for="t in s.tags"
+                    :key="t.id"
+                    :tag="t"
+                    size="xs"
+                  />
+                </div>
                 <UButton
                   icon="i-lucide-x"
                   size="xs"

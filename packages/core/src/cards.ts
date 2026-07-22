@@ -927,11 +927,14 @@ const subtaskColumns = {
 }
 
 export async function listSubtasks(db: Database, parentId: string) {
-  return db
+  const rows = await db
     .select(subtaskColumns)
     .from(schema.cards)
     .where(eq(schema.cards.parentId, parentId))
     .orderBy(asc(schema.cards.position), asc(schema.cards.key))
+  // Hydrate each subtask's tags in one batch query (no N+1).
+  const tagMap = await tagsByCardIds(db, rows.map(r => r.id))
+  return rows.map(r => ({ ...r, tags: tagMap.get(r.id) ?? [] }))
 }
 
 async function enrichCard<T extends { id: string, parentId: string | null }>(

@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { VueDraggable } from 'vue-draggable-plus'
+import type { Card, CardClaim, CardStatus } from '~/types/card'
 
-import type { Card } from '~/types/card'
-
-const props = defineProps<{
+// The Tasks Backlog peek. Reuses CardDraggableList so backlog cards group under
+// their story envelope exactly like the status columns (CO-414); the list owns
+// the drag wiring and the collapse toggle, emitting `reorder`.
+defineProps<{
   cards: Card[]
   closable?: boolean
+  groupByStory?: boolean
+  parentTitles?: Record<string, string>
+  parentClaims?: Record<string, CardClaim>
 }>()
 
 const emit = defineEmits<{
@@ -13,23 +17,11 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const localList = ref<Card[]>([...props.cards])
-
-watch(
-  () => props.cards,
-  (next) => {
-    localList.value = [...next]
-  },
-  { deep: true }
-)
-
-function onAdd(event: { data: Card }) {
-  const card = event.data
-  // Park the card in the backlog (status `backlog`, no sprint) unless it is
-  // already there.
-  if (card.status !== 'backlog') {
-    emit('card-moved-to-backlog', card.id)
-  }
+function onReorder(p: { status: CardStatus, orderedIds: string[], movedId?: string }) {
+  // A movedId means a card was dropped into the backlog from another column —
+  // park it (status `backlog`, no sprint) via the page. An internal reorder (no
+  // movedId) is visual-only, matching the pre-envelope backlog behavior.
+  if (p.movedId) emit('card-moved-to-backlog', p.movedId)
 }
 </script>
 
@@ -56,21 +48,13 @@ function onAdd(event: { data: Card }) {
       />
     </div>
 
-    <VueDraggable
-      v-model="localList"
-      :animation="150"
-      group="cards"
-      ghost-class="opacity-40"
-      class="flex flex-col gap-2 p-2 flex-1 overflow-y-auto overflow-x-hidden"
-      @add="onAdd"
-    >
-      <div
-        v-for="card in localList"
-        :key="card.id"
-        class="cursor-grab active:cursor-grabbing min-w-0 shrink-0"
-      >
-        <CardTile :card="card" show-parent-key />
-      </div>
-    </VueDraggable>
+    <CardDraggableList
+      status="backlog"
+      :cards="cards"
+      :group-by-story="groupByStory"
+      :parent-titles="parentTitles"
+      :parent-claims="parentClaims"
+      @reorder="onReorder"
+    />
   </div>
 </template>

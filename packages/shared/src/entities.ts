@@ -229,6 +229,7 @@ export interface CardSubtask {
   title: string
   status: CardStatus
   priority: number
+  tags: Tag[]
 }
 
 export interface CardParent {

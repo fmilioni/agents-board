@@ -495,3 +495,42 @@ describe('createCard with tagIds', () => {
     expect(reloaded?.tags).toEqual([])
   })
 })
+
+describe('subtask tag hydration', () => {
+  it('gives each subtask its own tags, empty when it has none', async () => {
+    const project = await freshProject(ctx.db)
+    const bug = await createTag(ctx.db, {
+      projectId: project.id,
+      name: 'bug',
+      color: '#ef4444'
+    })
+    const web = await createTag(ctx.db, {
+      projectId: project.id,
+      name: 'web',
+      color: '#3b82f6'
+    })
+    const story = await createCard(ctx.db, {
+      projectId: project.id,
+      title: 'story'
+    })
+    await createCard(ctx.db, {
+      projectId: project.id,
+      title: 'tagged child',
+      parentId: story.id,
+      tagIds: [bug!.id, web!.id]
+    })
+    await createCard(ctx.db, {
+      projectId: project.id,
+      title: 'untagged child',
+      parentId: story.id
+    })
+
+    const reloaded = await getCard(ctx.db, story.id)
+    const byTitle = new Map(reloaded!.subtasks.map(s => [s.title, s]))
+    expect(byTitle.get('tagged child')!.tags.map(t => t.name).sort()).toEqual([
+      'bug',
+      'web'
+    ])
+    expect(byTitle.get('untagged child')!.tags).toEqual([])
+  })
+})

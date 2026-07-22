@@ -32,14 +32,14 @@ Installing the plugin registers the `claude-organizer` MCP automatically (bundle
 
 The plugin ships the skills **and** registers an MCP client pointing at an HTTP URL — but the MCP **server** must be running somewhere:
 
-- **Local**: run the stack (Postgres + the MCP over Streamable HTTP) from this monorepo via Docker. Default URL `http://localhost:4402/mcp`; open when auth is off.
+- **Local**: run the stack (Postgres + the MCP over Streamable HTTP) from this monorepo via Docker. Default URL `http://127.0.0.1:4402/mcp`; open when auth is off.
 - **Remote / VPS**: point the plugin at your host by exporting `CO_MCP_URL` (e.g. `https://mcp.example.com/mcp`). When auth is on, `/mcp` is an OAuth 2.1 resource server and the plugin runs the OAuth flow itself — no token to paste.
 
 ```bash
 CO_MCP_URL=https://mcp.example.com/mcp claude
 ```
 
-`CO_MCP_URL` defaults safely: unset, the plugin talks to `http://localhost:4402/mcp`. See the root `README.md` for the full local/remote setup.
+`CO_MCP_URL` defaults safely: unset, the plugin talks to `http://127.0.0.1:4402/mcp`. See the root `README.md` for the full local/remote setup.
 
 ## Two hosts at once (local + company)
 

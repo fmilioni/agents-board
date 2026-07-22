@@ -34,3 +34,6 @@ CLAUDE.local.md
 
 # Run worktrees (local, per-run isolation)
 .claude/worktrees/
+
+# Per-machine Claude Code settings (personal permission allowlist)
+.claude/settings.local.json

@@ -68,10 +68,10 @@ docker compose up -d --build
 
 | Service | URL |
 | --- | --- |
-| **Web UI** | http://localhost:4401 |
-| **API** | http://localhost:4400 |
-| **MCP** (Streamable HTTP) | http://localhost:4402/mcp |
-| **Embedding service** | http://localhost:4403 |
+| **Web UI** | http://127.0.0.1:4401 |
+| **API** | http://127.0.0.1:4400 |
+| **MCP** (Streamable HTTP) | http://127.0.0.1:4402/mcp |
+| **Embedding service** | http://127.0.0.1:4403 |
 
 `cp .env.example .env` already ships working defaults for local Docker; the values worth knowing:
 
@@ -105,13 +105,13 @@ Or via the marketplace:
 /plugin install claude-organizer@claude-organizer
 ```
 
-The `claude-organizer` tools appear automatically, pointing at local Docker (`http://localhost:4402/mcp`). Local Docker needs nothing more; to reach another host, see the next section.
+The `claude-organizer` tools appear automatically, pointing at local Docker (`http://127.0.0.1:4402/mcp`). Local Docker needs nothing more; to reach another host, see the next section.
 
 ### 3. Configure the MCP for a remote host
 
-Local Docker is the default — nothing to do: the bundled plugin already registers a `claude-organizer` server at `http://localhost:4402/mcp`.
+Local Docker is the default — nothing to do: the bundled plugin already registers a `claude-organizer` server at `http://127.0.0.1:4402/mcp`.
 
-**Repoint the bundled entry with `CO_MCP_URL`.** To make the **primary** board live on another machine — sharing one board across several computers — just export `CO_MCP_URL` before starting Claude Code; the plugin's `claude-organizer` server uses it instead of `http://localhost:4402/mcp`, keeping the same tool prefix. Reach it over a stable hostname (a Tailscale MagicDNS name like `host.tailnet.ts.net`, a LAN host, or a remote domain). Pair it with **`CO_API_URL`** (default `http://127.0.0.1:4400`) pointed at the same host — the diff-capture scripts (`attach-commit` / `attach-worktree-diff`) post to the API directly, so without it they'd hit the client machine's own `localhost` and fail:
+**Repoint the bundled entry with `CO_MCP_URL`.** To make the **primary** board live on another machine — sharing one board across several computers — just export `CO_MCP_URL` before starting Claude Code; the plugin's `claude-organizer` server uses it instead of `http://127.0.0.1:4402/mcp`, keeping the same tool prefix. Reach it over a stable hostname (a Tailscale MagicDNS name like `host.tailnet.ts.net`, a LAN host, or a remote domain). Pair it with **`CO_API_URL`** (default `http://127.0.0.1:4400`) pointed at the same host — the diff-capture scripts (`attach-commit` / `attach-worktree-diff`) post to the API directly, so without it they'd hit the client machine's own `localhost` and fail:
 
 ```bash
 export CO_MCP_URL=http://host.tailnet.ts.net:4402/mcp

@@ -4,9 +4,7 @@ import type { IntakeItem } from '~/types/intake'
 const props = defineProps<{ item: IntakeItem }>()
 defineEmits<{ archive: [], destroy: [] }>()
 
-const keys = computed(() =>
-  (props.item.plannedCardKeys ?? '').split(',').filter(Boolean).join(', ')
-)
+const keys = computed(() => formatIntakeKeys(props.item.plannedCardKeys))
 </script>
 
 <template>

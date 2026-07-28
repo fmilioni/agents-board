@@ -18,14 +18,18 @@ This skill only tells you **which skill to use** and **how to find the project**
 
 Don't use them for prose or non-actionable lists, or to track real units of work — that's what cards and sub-tasks are for. In particular, **acceptance criteria and definition-of-done are NEVER task lists**: they are specs/conditions (descriptions of *what must be true*), not steps the user carries out — a clickable checkbox there is wrong, since it invites the user to "complete" a spec by ticking it. Reserve `- [ ]` for runbooks and QA test-plans the user actually walks through.
 
+## The inbox holds demands — not the debt you just created
+
+The inbox is for **demands not yet planned**: a passing idea, something to revisit, a finding that genuinely belongs to other work. It is **not** a queue for what the current change left half-done. A gap your own change opened — a state nothing renders, a caller you didn't update, a rule only half-applied — is **finished in that change**, not parked here, even when it falls outside the card's stated scope. `implement` carries the three tests that decide this at the review gate; when none of them says defer, you fix it and move on.
+
 ## Before adding to the inbox — check it isn't already tracked
 
-The inbox holds **demands not yet planned** (a passing idea, an out-of-scope finding, something to revisit). Before you create an inbox item — whether **you** decided to on your own (`create_inbox`) or you're about to **suggest** one to the user — first confirm the same thing isn't **already on the board or already queued**:
+Before you create an inbox item — whether **you** decided to on your own (`create_inbox`) or you're about to **suggest** one to the user — first confirm the same thing isn't **already on the board or already queued**:
 
 - **Search the board** — `search_cards`, and scan the open `backlog` / `todo` / `review` cards. If a card already covers it, it's planned — don't re-add it as a "new" demand; point the user at the existing card.
 - **Scan the pending inbox** — `list_inbox`. If the demand is already sitting there, don't drop a second copy.
 
-Only create the inbox item when nothing already covers it. When the check matches an existing card or inbox item, say which one — instead of silently creating a duplicate. This guards both phase skills: `plan` (don't park what's already planned) and `implement` (don't inbox an out-of-scope finding that's already a card).
+Only create the inbox item when nothing already covers it. When the check matches an existing card or inbox item, say which one — instead of silently creating a duplicate. This guards both phase skills: `plan` (don't park what's already planned) and `implement` (don't inbox a deferred finding that's already a card).
 
 ## The skills — pick by what the user asks
 

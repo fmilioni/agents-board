@@ -51,6 +51,8 @@ function onBodyInput(item: IntakeItem, value: string) {
 const isEmptyEdit = (item: IntakeItem) =>
   current.value?.id === item.id && !editing.bodyMd.trim()
 
+const originKeys = (item: IntakeItem) => formatIntakeKeys(item.plannedCardKeys)
+
 async function loadInbox() {
   if (!currentProjectId.value) {
     pending.value = []
@@ -79,9 +81,7 @@ async function loadInbox() {
 // read-derived path, and only when the card is actually referenced.
 function isPlannedCard(key: string | undefined) {
   if (!key) return false
-  return planned.value.some(i =>
-    (i.plannedCardKeys ?? '').split(',').includes(key)
-  )
+  return planned.value.some(i => parseIntakeKeys(i.plannedCardKeys).includes(key))
 }
 
 useProjectData(currentProjectId, loadInbox, {
@@ -217,6 +217,13 @@ const plannedCompleted = computed(() => planned.value.filter(i => i.completed))
             <p v-if="isEmptyEdit(item)" class="mt-1.5 text-xs text-error">
               A demand can't be empty — archive or destroy it instead.
             </p>
+            <div
+              v-if="originKeys(item)"
+              class="mt-1.5 flex items-center gap-1.5 text-xs text-muted"
+            >
+              <span>Previously planned as</span>
+              <AppMarkdown :value="originKeys(item)" />
+            </div>
             <div
               v-if="current?.id !== item.id"
               class="absolute top-2 right-2 flex items-center gap-0.5 rounded-md bg-default/80 backdrop-blur-sm opacity-0 transition group-hover:opacity-100 focus-within:opacity-100"

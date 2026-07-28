@@ -180,8 +180,10 @@ async function resolveToolProjectIds(
         ((input.commentIds as string[] | undefined) ?? []).filter(Boolean)
       ).then(nonEmpty)
 
+    case 'update_inbox':
     case 'mark_inbox_planned':
     case 'archive_inbox':
+    case 'restore_inbox':
     case 'destroy_inbox':
       return entity('intakeItem', str(input.id))
 

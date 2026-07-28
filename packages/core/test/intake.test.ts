@@ -5,6 +5,7 @@ import { schema } from '@claude-organizer/db'
 
 import {
   archiveCard,
+  archiveIntakeItem,
   archiveSprint,
   completeSprint,
   createCard,
@@ -15,9 +16,12 @@ import {
   markIntakePlanned,
   reopenSprint,
   restoreCard,
+  restoreIntakeItem,
   restoreSprint,
   startSprint,
-  updateCard
+  syncIntakeForCard,
+  updateCard,
+  updateIntakeItem
 } from '../src/index'
 import { freshProject, useTestDb } from './helpers'
 
@@ -36,6 +40,169 @@ async function completedFlag(projectId: string, itemId: string) {
   const items = await listIntakeItems(ctx.db, projectId)
   return items.find(i => i.id === itemId)?.completed
 }
+
+describe('editing a demand', () => {
+  it('rewrites the body', async () => {
+    const project = await freshProject(ctx.db)
+    const item = await createIntakeItem(ctx.db, {
+      projectId: project.id,
+      bodyMd: 'rough note'
+    })
+    const updated = await updateIntakeItem(ctx.db, {
+      id: item.id,
+      bodyMd: 'sharpened note'
+    })
+    expect(updated?.bodyMd).toBe('sharpened note')
+  })
+
+  it('returns null for an id that does not exist', async () => {
+    const updated = await updateIntakeItem(ctx.db, {
+      id: 'itk_missing',
+      bodyMd: 'x'
+    })
+    expect(updated).toBeNull()
+  })
+
+  it('keeps the status a planned demand already had', async () => {
+    const project = await freshProject(ctx.db)
+    const { item } = await plannedItemWithCards(project.id, ['a'])
+    const updated = await updateIntakeItem(ctx.db, {
+      id: item.id,
+      bodyMd: 'more context'
+    })
+    expect(updated?.status).toBe('planned')
+  })
+
+  it('edits an archived demand without reviving it', async () => {
+    const project = await freshProject(ctx.db)
+    const item = await createIntakeItem(ctx.db, {
+      projectId: project.id,
+      bodyMd: 'discarded'
+    })
+    await archiveIntakeItem(ctx.db, item.id)
+    const updated = await updateIntakeItem(ctx.db, {
+      id: item.id,
+      bodyMd: 'discarded, with a note on why'
+    })
+    expect(updated?.status).toBe('archived')
+    expect(updated?.archivedAt).not.toBeNull()
+  })
+})
+
+describe('correcting the planned keys', () => {
+  it('replaces the whole key set when planned again', async () => {
+    const project = await freshProject(ctx.db)
+    const { item } = await plannedItemWithCards(project.id, ['a', 'b'])
+    const right = await createCard(ctx.db, {
+      projectId: project.id,
+      title: 'the card it really became'
+    })
+    const updated = await markIntakePlanned(ctx.db, item.id, [right.key])
+    expect(updated?.plannedCardKeys).toBe(right.key)
+  })
+
+  it('re-derives completed from the cards it now points at', async () => {
+    const project = await freshProject(ctx.db)
+    const { item, cards } = await plannedItemWithCards(project.id, ['shipped'])
+    await updateCard(ctx.db, { id: cards[0]!.id, status: 'done' })
+    expect(await completedFlag(project.id, item.id)).toBe(true)
+
+    const stillOpen = await createCard(ctx.db, {
+      projectId: project.id,
+      title: 'the card it really became'
+    })
+    await markIntakePlanned(ctx.db, item.id, [stillOpen.key])
+    expect(await completedFlag(project.id, item.id)).toBe(false)
+  })
+})
+
+describe('restoring an archived demand', () => {
+  it('lands on planned when it carries card keys', async () => {
+    const project = await freshProject(ctx.db)
+    const { item } = await plannedItemWithCards(project.id, ['a'])
+    await archiveIntakeItem(ctx.db, item.id)
+    const restored = await restoreIntakeItem(ctx.db, item.id)
+    expect(restored?.status).toBe('planned')
+    expect(restored?.archivedAt).toBeNull()
+  })
+
+  it('lands on pending when it carries none', async () => {
+    const project = await freshProject(ctx.db)
+    const item = await createIntakeItem(ctx.db, {
+      projectId: project.id,
+      bodyMd: 'never planned'
+    })
+    await archiveIntakeItem(ctx.db, item.id)
+    const restored = await restoreIntakeItem(ctx.db, item.id)
+    expect(restored?.status).toBe('pending')
+    expect(restored?.archivedAt).toBeNull()
+  })
+
+  it('returns null for an id that does not exist', async () => {
+    expect(await restoreIntakeItem(ctx.db, 'itk_missing')).toBeNull()
+  })
+
+  it('lands on pending when every card it points at is archived', async () => {
+    const project = await freshProject(ctx.db)
+    const { item, cards } = await plannedItemWithCards(project.id, ['a', 'b'])
+    for (const c of cards) await archiveCard(ctx.db, c.id)
+
+    const restored = await restoreIntakeItem(ctx.db, item.id)
+
+    expect(restored?.status).toBe('pending')
+    expect(restored?.plannedCardKeys).toBe(cards.map(c => c.key).join(','))
+  })
+
+  it('is not archived again by the next card event', async () => {
+    const project = await freshProject(ctx.db)
+    const { item, cards } = await plannedItemWithCards(project.id, ['a'])
+    await archiveCard(ctx.db, cards[0]!.id)
+    await restoreIntakeItem(ctx.db, item.id)
+
+    await syncIntakeForCard(ctx.db, project.id, cards[0]!.key)
+
+    const [row] = await ctx.db
+      .select()
+      .from(schema.intakeItems)
+      .where(eq(schema.intakeItems.id, item.id))
+    expect(row?.status).toBe('pending')
+  })
+
+  it('lands on pending when its card is alive but its sprint is archived', async () => {
+    const project = await freshProject(ctx.db)
+    const sprint = await createSprint(ctx.db, { projectId: project.id, name: 's' })
+    const card = await createCard(ctx.db, {
+      projectId: project.id,
+      title: 'in an archived sprint',
+      sprintId: sprint.id
+    })
+    const item = await createIntakeItem(ctx.db, {
+      projectId: project.id,
+      bodyMd: 'demand'
+    })
+    await markIntakePlanned(ctx.db, item.id, [card.key])
+    await archiveSprint(ctx.db, sprint.id)
+
+    const restored = await restoreIntakeItem(ctx.db, item.id)
+
+    expect(restored?.status).toBe('pending')
+  })
+
+  it('is promoted back to planned when one of its cards returns', async () => {
+    const project = await freshProject(ctx.db)
+    const { item, cards } = await plannedItemWithCards(project.id, ['a'])
+    await archiveCard(ctx.db, cards[0]!.id)
+    await restoreIntakeItem(ctx.db, item.id)
+
+    await restoreCard(ctx.db, cards[0]!.id)
+
+    const [row] = await ctx.db
+      .select()
+      .from(schema.intakeItems)
+      .where(eq(schema.intakeItems.id, item.id))
+    expect(row?.status).toBe('planned')
+  })
+})
 
 describe('intake completion derived from card status', () => {
   it('is completed when all referenced cards are done', async () => {
@@ -87,6 +254,39 @@ async function findItem(projectId: string, itemId: string) {
 }
 
 describe('intake cascade on card archive/restore/destroy', () => {
+  it('survives the destroy of the last card it pointed at', async () => {
+    const project = await freshProject(ctx.db)
+    const { item, cards } = await plannedItemWithCards(project.id, ['a'])
+    await archiveCard(ctx.db, cards[0]!.id)
+    await restoreIntakeItem(ctx.db, item.id)
+
+    await destroyCard(ctx.db, cards[0]!.id)
+
+    const [row] = await ctx.db
+      .select()
+      .from(schema.intakeItems)
+      .where(eq(schema.intakeItems.id, item.id))
+    expect(row?.status).toBe('pending')
+    expect(row?.plannedCardKeys).toBeNull()
+  })
+
+  it('is not archived when a destroy leaves it with inactive keys', async () => {
+    const project = await freshProject(ctx.db)
+    const { item, cards } = await plannedItemWithCards(project.id, ['a', 'b'])
+    for (const c of cards) await archiveCard(ctx.db, c.id)
+    await restoreIntakeItem(ctx.db, item.id)
+
+    await destroyCard(ctx.db, cards[0]!.id)
+
+    const [row] = await ctx.db
+      .select()
+      .from(schema.intakeItems)
+      .where(eq(schema.intakeItems.id, item.id))
+    expect(row?.status).toBe('pending')
+    expect(row?.archivedAt).toBeNull()
+    expect(row?.plannedCardKeys).toBe(cards[1]!.key)
+  })
+
   it('archives the item when its last active card is archived, restores on undo', async () => {
     const project = await freshProject(ctx.db)
     const { item, cards } = await plannedItemWithCards(project.id, ['a', 'b'])

@@ -7,7 +7,9 @@ import {
   destroyIntakeItem,
   intakeStatus,
   listIntakeItems,
-  markIntakePlanned
+  markIntakePlanned,
+  restoreIntakeItem,
+  updateIntakeItem
 } from '@claude-organizer/core'
 import type { Database } from '@claude-organizer/db'
 
@@ -67,10 +69,24 @@ export function registerIntakeTools(server: McpServer, db: Database) {
   )
 
   server.registerTool(
+    'update_inbox',
+    {
+      description:
+        'Rewrite the text of an inbox demand. Use to sharpen a demand captured in a hurry or to fold in context that arrived later — not to turn it into a different demand (capture that one with create_inbox). Works on an archived demand too, but its images were already reclaimed by the archive, so re-referencing them there gets you a broken image. Returns null when no demand has that id.',
+      inputSchema: {
+        id: z.string(),
+        bodyMd: z.string().min(1)
+      }
+    },
+    async ({ id, bodyMd }) =>
+      asJson(intakeAck(await updateIntakeItem(db, { id, bodyMd })))
+  )
+
+  server.registerTool(
     'mark_inbox_planned',
     {
       description:
-        'Mark an inbox demand as planned, recording the keys of the cards it became (e.g. CO-12, CO-13). Call after a demand has been planned into cards.',
+        'Record the keys of the cards an inbox demand became (e.g. CO-12, CO-13), marking it planned. Call after a demand has been planned into cards. Calling it again on a PLANNED demand REPLACES the whole set — that is how a planning that pointed at the wrong card or missed one is corrected. On an ARCHIVED demand call restore_inbox first: this tool would leave it planned yet still stamped as archived, with its images unlinked.',
       inputSchema: {
         id: z.string(),
         cardKeys: z.array(z.string()).min(1)
@@ -84,12 +100,24 @@ export function registerIntakeTools(server: McpServer, db: Database) {
     'archive_inbox',
     {
       description:
-        'Archive an inbox demand (status archived) — recoverable. Use when a demand is discarded during planning but the user may want it back. Restore is done from the web.',
+        'Archive an inbox demand (status archived) — recoverable via restore_inbox. Use when a demand is discarded during planning but the user may want it back.',
       inputSchema: {
         id: z.string()
       }
     },
     async ({ id }) => asJson(intakeAck(await archiveIntakeItem(db, id)))
+  )
+
+  server.registerTool(
+    'restore_inbox',
+    {
+      description:
+        'Bring an archived inbox demand back. The status it lands in is derived, not chosen: `planned` only while at least one card it points at is still active, `pending` otherwise (the keys are kept either way, so a demand whose cards were all archived comes back waiting to be planned again). Returns null when no demand has that id.',
+      inputSchema: {
+        id: z.string()
+      }
+    },
+    async ({ id }) => asJson(intakeAck(await restoreIntakeItem(db, id)))
   )
 
   server.registerTool(

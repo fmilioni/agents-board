@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { createId, type Database, schema } from '@claude-organizer/db'
@@ -172,6 +172,7 @@ export async function markIntakePlanned(
     .set({
       status: 'planned',
       plannedCardKeys: keys || null,
+      archivedAt: null,
       updatedAt: sql`now()`
     })
     .where(eq(schema.intakeItems.id, id))
@@ -193,6 +194,11 @@ export async function archiveIntakeItem(db: Database, id: string) {
   return row ?? null
 }
 
+/**
+ * Bring an archived demand back, in the status its cards justify: `planned`
+ * only while at least one referenced card is still active, `pending` otherwise.
+ * The keys are kept either way.
+ */
 export async function restoreIntakeItem(db: Database, id: string) {
   const [current] = await db
     .select()
@@ -200,7 +206,7 @@ export async function restoreIntakeItem(db: Database, id: string) {
     .where(eq(schema.intakeItems.id, id))
     .limit(1)
   if (!current) return null
-  const nextStatus = current.plannedCardKeys ? 'planned' : 'pending'
+  const nextStatus = (await hasActiveCard(db, current)) ? 'planned' : 'pending'
   const [row] = await db
     .update(schema.intakeItems)
     .set({ status: nextStatus, archivedAt: null, updatedAt: sql`now()` })
@@ -214,7 +220,23 @@ export async function restoreIntakeItem(db: Database, id: string) {
   return row ?? null
 }
 
-/** Intake items (the only statuses that carry keys) referencing any of `keys`. */
+function hasActive(keys: string[], states: Map<string, CardState>): boolean {
+  return keys.some((k) => {
+    const state = states.get(k)
+    return state !== undefined && !state.archived
+  })
+}
+
+async function hasActiveCard(
+  db: Database,
+  item: { projectId: string, plannedCardKeys: string | null }
+): Promise<boolean> {
+  const keys = parseCardKeys(item.plannedCardKeys)
+  if (keys.length === 0) return false
+  return hasActive(keys, await cardStatesByKeys(db, item.projectId, keys))
+}
+
+/** Intake items referencing any of `keys`, whatever status they sit in. */
 async function findIntakeItemsByCardKeys(
   db: Database,
   projectId: string,
@@ -227,7 +249,7 @@ async function findIntakeItemsByCardKeys(
     .where(
       and(
         eq(schema.intakeItems.projectId, projectId),
-        inArray(schema.intakeItems.status, ['planned', 'archived'])
+        isNotNull(schema.intakeItems.plannedCardKeys)
       )
     )
   return items.filter(i =>
@@ -276,14 +298,14 @@ async function rederiveIntakeItems(
   ]
   const states = await cardStatesByKeys(db, projectId, allKeys)
   for (const item of items) {
-    const hasActive = parseCardKeys(item.plannedCardKeys).some((k) => {
-      const s = states.get(k)
-      return s !== undefined && !s.archived
-    })
-    if (!hasActive && item.status !== 'archived') {
+    const keys = parseCardKeys(item.plannedCardKeys)
+    const active = hasActive(keys, states)
+    if (!active && item.status === 'planned') {
       await archiveIntakeItem(db, item.id)
-    } else if (hasActive && item.status === 'archived') {
+    } else if (active && item.status === 'archived') {
       await restoreIntakeItem(db, item.id)
+    } else if (active && item.status === 'pending') {
+      await markIntakePlanned(db, item.id, keys)
     }
   }
 }
@@ -291,7 +313,9 @@ async function rederiveIntakeItems(
 /**
  * Prune destroyed card keys from referencing items: an item left with no keys
  * is destroyed; otherwise the CSV is rewritten and its archived/planned state
- * re-derived from the remaining cards (keeps "archived ⟺ no active card" true).
+ * re-derived from the remaining cards (keeps "planned ⟺ an active card" true).
+ * A `pending` demand is exempt from both — it is waiting to be planned, not
+ * living off those cards, so it only loses the keys that went with them.
  */
 export async function pruneIntakeForDestroyedCards(
   db: Database,
@@ -304,25 +328,23 @@ export async function pruneIntakeForDestroyedCards(
     const remaining = parseCardKeys(item.plannedCardKeys).filter(
       k => !removed.has(k)
     )
-    if (remaining.length === 0) {
+    if (remaining.length === 0 && item.status !== 'pending') {
       await destroyIntakeItem(db, item.id)
       continue
     }
     const states = await cardStatesByKeys(db, projectId, remaining)
-    const hasActive = remaining.some((k) => {
-      const s = states.get(k)
-      return s !== undefined && !s.archived
-    })
     const set: Record<string, unknown> = {
-      plannedCardKeys: remaining.join(','),
+      plannedCardKeys: remaining.join(',') || null,
       updatedAt: sql`now()`
     }
-    if (hasActive) {
-      set.status = 'planned'
-      set.archivedAt = null
-    } else if (item.status !== 'archived') {
-      set.status = 'archived'
-      set.archivedAt = sql`now()`
+    if (item.status !== 'pending') {
+      if (hasActive(remaining, states)) {
+        set.status = 'planned'
+        set.archivedAt = null
+      } else if (item.status !== 'archived') {
+        set.status = 'archived'
+        set.archivedAt = sql`now()`
+      }
     }
     await db
       .update(schema.intakeItems)

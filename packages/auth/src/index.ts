@@ -68,6 +68,27 @@ export async function hasAnyUser(db: Database): Promise<boolean> {
   return Boolean(row)
 }
 
+const DEFAULT_MCP_ACCESS_TOKEN_TTL = 604800
+const DEFAULT_MCP_REFRESH_TOKEN_TTL = 2592000
+const MAX_MCP_TOKEN_TTL = 31536000
+
+function readTtlSeconds(name: string, fallback: number): number {
+  const raw = process.env[name]?.trim()
+  if (!raw) return fallback
+  const seconds = Number(raw)
+  if (
+    !Number.isInteger(seconds)
+    || seconds < 1
+    || seconds > MAX_MCP_TOKEN_TTL
+  ) {
+    console.warn(
+      `Ignoring ${name}="${raw}": expected a positive integer of seconds up to ${MAX_MCP_TOKEN_TTL}. Using ${fallback}.`
+    )
+    return fallback
+  }
+  return seconds
+}
+
 export function createAuth(db: Database) {
   const loginPage = getMcpLoginPage()
   const cookieDomain = process.env.AUTH_COOKIE_DOMAIN?.trim()
@@ -99,7 +120,15 @@ export function createAuth(db: Database) {
         oidcConfig: {
           loginPage,
           requirePKCE: true,
-          allowDynamicClientRegistration: true
+          allowDynamicClientRegistration: true,
+          accessTokenExpiresIn: readTtlSeconds(
+            'MCP_ACCESS_TOKEN_TTL',
+            DEFAULT_MCP_ACCESS_TOKEN_TTL
+          ),
+          refreshTokenExpiresIn: readTtlSeconds(
+            'MCP_REFRESH_TOKEN_TTL',
+            DEFAULT_MCP_REFRESH_TOKEN_TTL
+          )
         }
       })
     ],

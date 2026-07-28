@@ -118,6 +118,11 @@ services:
       # The AS binds the OAuth token's resource/audience to the MCP's public URL,
       # so api and mcp must resolve the same value (matters once H5 overrides it).
       MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-http://127.0.0.1:4402}
+      # Lifetime in seconds of the OAuth tokens the MCP login issues. Only the
+      # api needs them: it is the authorization server, while the mcp validates
+      # against the expiry already stored with the token.
+      MCP_ACCESS_TOKEN_TTL: ${MCP_ACCESS_TOKEN_TTL:-}
+      MCP_REFRESH_TOKEN_TTL: ${MCP_REFRESH_TOKEN_TTL:-}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
     ports:

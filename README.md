@@ -166,6 +166,7 @@ Relevant env (see `.env.example`):
 | `BETTER_AUTH_URL` | Public URL of the API (where better-auth is mounted). |
 | `AUTH_TRUSTED_ORIGINS` | Origins allowed to call auth (CSRF) — also the API's CORS allow-list. |
 | `AUTH_COOKIE_DOMAIN` | Parent domain to share the session cookie across subdomains (remote only). |
+| `MCP_ACCESS_TOKEN_TTL` / `MCP_REFRESH_TOKEN_TTL` | Lifetime in seconds of the OAuth tokens the MCP login issues (default 7 days / 30 days). Shorten both when the board is exposed to the internet. |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | Enable GitHub sign-in. |
 
 > **Local gotcha:** the web (`:4401`) and API (`:4400`) are different origins, and the session cookie is `SameSite=Lax` + host-bound. Locally, reach **both on the same host** — use `127.0.0.1`, not `localhost` — or the cookie won't be sent. Behind the reverse proxy, `AUTH_COOKIE_DOMAIN` removes this constraint across the subdomains.

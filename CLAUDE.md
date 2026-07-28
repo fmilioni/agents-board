@@ -37,6 +37,7 @@ Architecture, data model, decisions (ADRs), code/UI patterns and per-module deta
 ## Project rules (overrides)
 
 - **Language**: write **skills and code in English** (the product is international). Content authored for the user — **tasks, comments and docs** — follows the user's language.
+- **Code comments**: the default is **none** — the code, the types, the names and the test names carry the intent. The full bar (the closed list of what justifies one, what never does, and why a test body takes none) lives in the `implement` skill's step 4 and in the `reviewer` agent, which apply it identically — don't restate it here.
 - **Commits**: one commit per card/task, **only after the user confirms** it works; the message is written **in English** and references the key (e.g. `feat(tags): … (<KEY>-4)`). After committing, attach its diff to the card with `pnpm attach-commit <sha>` (captured outside the AI context — never read or paste the diff).
 - **PRs**: written **in English** (title *and* body, same as commits — only tasks/comments/docs follow the user's language). Write the **title as a conventional-commit** (`feat(scope): … (<KEY>-N)`); PRs are **squash-merged**, so the title becomes the commit message. The body summarizes the work — **no "Generated with Claude Code" footer**.
   - **Merging is the user's call.** By default the AI opens the PR and **stops**; the user merges. Any deployment-specific merge governance (branch protection, the exact merge command, who may override it) lives in your `CLAUDE.local.md`.

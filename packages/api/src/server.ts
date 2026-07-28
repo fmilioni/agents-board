@@ -4,7 +4,10 @@ import websocket from '@fastify/websocket'
 import Fastify from 'fastify'
 
 import { createAuth, getTrustedOrigins } from '@claude-organizer/auth'
-import { sweepOrphanAttachments } from '@claude-organizer/core'
+import {
+  purgeExpiredOauthTokens,
+  sweepOrphanAttachments
+} from '@claude-organizer/core'
 import { createDb } from '@claude-organizer/db'
 
 import { registerAuthEnforcement } from './plugins/auth-enforcement'
@@ -110,6 +113,13 @@ try {
   void sweepOrphanAttachments(db).catch((err) => {
     app.log.error({ err }, 'boot orphan-attachment sweep failed')
   })
+  void purgeExpiredOauthTokens(db)
+    .then((purged) => {
+      if (purged > 0) app.log.info(`purged ${purged} expired OAuth token(s)`)
+    })
+    .catch((err) => {
+      app.log.error({ err }, 'boot expired-oauth-token purge failed')
+    })
 } catch (err) {
   app.log.error(err)
   process.exit(1)

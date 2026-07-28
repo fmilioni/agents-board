@@ -16,6 +16,8 @@ import {
 import {
   getSystemSettings,
   getUserAuthz,
+  refreshTokenBeingRotated,
+  revokeRefreshToken,
   setAuthEnabled,
   setEmbeddingDtype,
   setEmbeddingModel,
@@ -82,8 +84,22 @@ export function registerAuthRoutes(
     method: ['GET', 'POST'],
     url: '/api/auth/*',
     handler: async (request, reply) => {
+      const rotated = refreshTokenBeingRotated(request)
       const res = await auth.handler(toWebRequest(request))
-      sendWebResponse(reply, res, await res.text())
+      const body = await res.text()
+      if (rotated && res.status === 200) {
+        try {
+          const revoked = await revokeRefreshToken(db, rotated)
+          if (!revoked) {
+            request.log.warn('renewed with a refresh token that was not live')
+          }
+        } catch (err) {
+          // The client already holds its new token; failing the renewal over
+          // the retirement would send it back through a full login.
+          request.log.error({ err }, 'refresh token rotation failed')
+        }
+      }
+      sendWebResponse(reply, res, body)
     }
   })
 

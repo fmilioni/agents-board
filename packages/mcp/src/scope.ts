@@ -90,6 +90,7 @@ async function resolveToolProjectIds(
     case 'list_inbox':
     case 'update_project_key_prefix':
     case 'set_project_repo':
+    case 'issue_upload_token':
       return one(str(input.projectId))
 
     case 'get_project':

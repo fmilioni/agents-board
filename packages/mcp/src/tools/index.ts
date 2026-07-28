@@ -14,6 +14,7 @@ import { registerIntakeTools } from './intake'
 import { registerProjectTools } from './projects'
 import { registerSprintTools } from './sprints'
 import { registerTagTools } from './tags'
+import { registerUploadTools } from './uploads'
 
 // Per-tool authorization is enforced centrally in createMcpServer (registerTool
 // wrapper). `scope` only reaches registerProjectTools, which needs it to filter
@@ -33,6 +34,7 @@ export function registerTools(
   registerBlockerTools(server, db)
   registerDocTools(server, db)
   registerIntakeTools(server, db)
+  registerUploadTools(server)
 }
 
 export function asJson(value: unknown) {

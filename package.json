@@ -22,6 +22,7 @@
     "dev": "pnpm db:up && pnpm -r --parallel --filter './packages/*' dev",
     "build": "pnpm -r build",
     "attach-commit": "node plugins/claude-organizer/skills/implement/scripts/attach-commit.mjs",
+    "attach-image": "node plugins/claude-organizer/scripts/attach-image.mjs",
     "attach-worktree-diff": "node plugins/claude-organizer/skills/implement/scripts/attach-worktree-diff.mjs",
     "bump": "node scripts/bump-version.mjs",
     "typecheck": "pnpm -r typecheck",

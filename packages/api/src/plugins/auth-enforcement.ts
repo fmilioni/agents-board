@@ -12,7 +12,8 @@ import {
   resolveCommitTokenSecret,
   resolveEntityProjectId,
   verifyAttachmentToken,
-  verifyCommitToken
+  verifyCommitToken,
+  verifyUploadToken
 } from '@claude-organizer/core'
 import type { Database } from '@claude-organizer/db'
 import type { UserRole, UserStatus } from '@claude-organizer/shared'
@@ -64,6 +65,20 @@ function acceptsCommitToken(req: FastifyRequest): boolean {
   if (typeof token !== 'string' || !key) return false
   const secret = resolveCommitTokenSecret()
   return secret ? verifyCommitToken(token, key, secret) : false
+}
+
+// The agent's attach-image script has no browser session either. A valid
+// `X-CO-Upload-Token` stands in for one on the upload route alone, and only for
+// the project it was minted for (authUser stays null, as above).
+function acceptsUploadToken(req: FastifyRequest): boolean {
+  if (req.routeOptions?.url !== '/attachments' || req.method !== 'POST') {
+    return false
+  }
+  const token = req.headers['x-co-upload-token']
+  const projectId = (req.query as Record<string, string | undefined>).projectId
+  if (typeof token !== 'string' || !projectId) return false
+  const secret = resolveCommitTokenSecret()
+  return secret ? verifyUploadToken(token, projectId, secret) : false
 }
 
 // `<img>` can't send a session cookie cross-site, so the serve route accepts a
@@ -225,6 +240,7 @@ export function registerAuthEnforcement(
       if (acceptsCommitToken(req)) return
       // A signed `<img>` serve URL stands in for a session on the serve route.
       if (acceptsAttachmentToken(req)) return
+      if (acceptsUploadToken(req)) return
       return reply.code(401).send({ error: 'unauthorized' })
     }
 

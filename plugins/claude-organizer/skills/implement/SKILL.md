@@ -126,3 +126,15 @@ CO_COMMIT_TOKEN=<token> node "<this skill's directory>/scripts/attach-commit.mjs
 ```
 
 **Auth flag** — read it from the project's `CLAUDE.md`. Auth **on** → mint `issue_commit_token(<CO-N>)` and pass `CO_COMMIT_TOKEN=<token>` (one per attach). Auth **off / no flag** → run tokenless. If an attach returns **401**, auth is actually on: record the flag in `CLAUDE.md`, then retry with a token.
+
+## Attaching an image
+
+A screenshot you produced (a UI check, a failing state, a chart) becomes an attachment through **`attach-image.mjs <file> <projectId> [alt]`**. It sits in the plugin's own `scripts/` directory rather than this skill's, so `plan` reaches the same script — hence the `../../` below. It uploads from disk and prints the `att_` id and a `![alt](/attachments/att_…)`; **the bytes never enter your context**, the same reason the diff scripts exist. A `.py` twin sits next to it for hosts without Node.
+
+```bash
+node "<this skill's directory>/../../scripts/attach-image.mjs" shot.png prj_xxx "board with the story collapsed"
+# auth on → mint issue_upload_token(<projectId>) first:
+CO_UPLOAD_TOKEN=<token> node "<this skill's directory>/../../scripts/attach-image.mjs" shot.png prj_xxx "…"
+```
+
+Paste that markdown into the card, comment, doc or inbox body — **saving the body is what links the attachment**; an upload nobody references is swept after the grace window. The `alt` is what search finds it by, so describe what the image *shows*, not "screenshot".

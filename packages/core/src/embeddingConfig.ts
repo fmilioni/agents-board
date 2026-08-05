@@ -1,8 +1,8 @@
 import { eq, sql } from 'drizzle-orm'
 
-import { type Database, schema } from '@claude-organizer/db'
-import type { EmbeddingConfig, EmbeddingDtype } from '@claude-organizer/shared'
-import { EMBEDDING_DTYPES, resolveEmbeddingConfig } from '@claude-organizer/shared'
+import { type Database, schema } from '@agents-board/db'
+import type { EmbeddingConfig, EmbeddingDtype } from '@agents-board/shared'
+import { EMBEDDING_DTYPES, resolveEmbeddingConfig } from '@agents-board/shared'
 
 import { getSystemSettings } from './authz'
 

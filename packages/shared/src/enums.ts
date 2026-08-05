@@ -1,5 +1,5 @@
 // Canonical enum values, mirroring the Postgres pgEnums in
-// @claude-organizer/db. The conformance check there asserts they stay in sync.
+// @agents-board/db. The conformance check there asserts they stay in sync.
 
 export const CARD_STATUSES = [
   'backlog',

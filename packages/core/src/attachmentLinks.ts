@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 
-import { type Database, schema } from '@claude-organizer/db'
-import type { AttachmentOwnerType } from '@claude-organizer/shared'
+import { type Database, schema } from '@agents-board/db'
+import type { AttachmentOwnerType } from '@agents-board/shared'
 
 import { attachmentIdsInBody } from './attachments'
 

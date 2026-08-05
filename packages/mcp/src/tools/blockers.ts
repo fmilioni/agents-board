@@ -1,8 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 
-import { addBlocker, removeBlocker } from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+import { addBlocker, removeBlocker } from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 import { asJson } from './index'
 

@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { schema } from '@claude-organizer/db'
+import { schema } from '@agents-board/db'
 
 import {
   MCP_TOKEN_PATH,

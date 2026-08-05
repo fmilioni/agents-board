@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { EmbeddingDtype, EmbeddingRuntimeStatus } from '@claude-organizer/shared'
+import type { EmbeddingDtype, EmbeddingRuntimeStatus } from '@agents-board/shared'
 
 const api = useApi()
 const toast = useToast()

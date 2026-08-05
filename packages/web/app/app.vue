@@ -1,8 +1,8 @@
 <script setup lang="ts">
-// Per-page titles render as "<page> · Claude Organizer"; pages without a title
+// Per-page titles render as "<page> · Agents Board"; pages without a title
 // (or null) fall back to just the app name. Pages set their title via useHead.
 useHead({
-  titleTemplate: title => (title ? `${title} · Claude Organizer` : 'Claude Organizer')
+  titleTemplate: title => (title ? `${title} · Agents Board` : 'Agents Board')
 })
 </script>
 

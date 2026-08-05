@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { buildCommitUrl, WORKING_TREE_SHA } from '@claude-organizer/shared'
+import { buildCommitUrl, WORKING_TREE_SHA } from '@agents-board/shared'
 
 import type { Card, CardStatus } from '~/types/card'
 import { cardStatusMeta, cardStatusSelectOrder } from '~/types/card'

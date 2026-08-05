@@ -10,8 +10,8 @@ import {
   restoreProject,
   setProjectRepo,
   updateProjectKeyPrefix
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 import { filterProjectsByScope, type McpScope } from '../scope'
 import { asJson, pageInputs } from './index'
@@ -46,7 +46,7 @@ export function registerProjectTools(
     'list_projects',
     {
       description:
-        'List all projects tracked by claude-organizer. Pages with limit/offset; response is { projects, hasMore, offset }. Archived projects are hidden by default.',
+        'List all projects tracked by agents-board. Pages with limit/offset; response is { projects, hasMore, offset }. Archived projects are hidden by default.',
       inputSchema: {
         includeArchived: z
           .boolean()
@@ -88,7 +88,7 @@ export function registerProjectTools(
     'create_project',
     {
       description:
-        'Create a new project workspace. keyPrefix becomes the prefix for card keys (e.g. \'CO\' produces CO-1, CO-2). If omitted, derived from the slug.',
+        'Create a new project workspace. keyPrefix becomes the prefix for card keys (e.g. \'AB\' produces AB-1, AB-2). If omitted, derived from the slug.',
       inputSchema: {
         name: z.string().min(1).max(120),
         slug: z

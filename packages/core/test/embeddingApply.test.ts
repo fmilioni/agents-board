@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // Record the ordering of reconcile / reload / backfill. backfillDoc/Card/Comment
 // all funnel through the `backfillChunks` primitive in `../src/embedding`, so
 // mocking that module intercepts the reload push and every backfill; reconcile is
-// mocked separately (in `@claude-organizer/db`) so it records its call without
+// mocked separately (in `@agents-board/db`) so it records its call without
 // rewriting the `vector(N)` column for real.
 const { calls, reloadMock } = vi.hoisted(() => ({
   calls: [] as string[],
@@ -12,8 +12,8 @@ const { calls, reloadMock } = vi.hoisted(() => ({
   })
 }))
 
-vi.mock('@claude-organizer/db', async (importOriginal) => {
-  const real = await importOriginal<typeof import('@claude-organizer/db')>()
+vi.mock('@agents-board/db', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@agents-board/db')>()
   return {
     ...real,
     reconcileEmbeddingDim: vi.fn(async () => {
@@ -37,7 +37,7 @@ vi.mock('../src/embedding', async (importOriginal) => {
   }
 })
 
-import { type Database, reconcileEmbeddingDim } from '@claude-organizer/db'
+import { type Database, reconcileEmbeddingDim } from '@agents-board/db'
 
 import {
   applyEmbeddingConfig,

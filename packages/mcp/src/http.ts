@@ -14,9 +14,9 @@ import {
   createAuth,
   getMcpResourceUrl,
   oAuthProtectedResourceMetadata
-} from '@claude-organizer/auth'
-import { getSystemSettings } from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+} from '@agents-board/auth'
+import { getSystemSettings } from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 import { createMcpServer } from './create-server'
 import { type McpScope, resolveMcpScope } from './scope'
@@ -192,14 +192,14 @@ export function startHttpServer({ db, port }: HttpServerOptions): Server {
 
   const httpServer = createServer((req, res) => {
     handle(req, res).catch((err) => {
-      console.error('[claude-organizer-mcp] request error', err)
+      console.error('[agents-board-mcp] request error', err)
       if (!res.headersSent) sendError(res, 500, -32603, 'Internal server error')
     })
   })
 
   httpServer.listen(port, () => {
     console.error(
-      `[claude-organizer-mcp] Streamable HTTP transport on http://127.0.0.1:${port}${MCP_PATH} (OAuth when auth is enabled)`
+      `[agents-board-mcp] Streamable HTTP transport on http://127.0.0.1:${port}${MCP_PATH} (OAuth when auth is enabled)`
     )
   })
 

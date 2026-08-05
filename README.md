@@ -1,12 +1,12 @@
 <div align="center">
 
-# Claude Organizer
+# Agents Board
 
-### A "Jira" for Claude Code — your agent's project board, exposed over MCP.
+### A project board for coding agents, shared over MCP.
 
-Claude Organizer gives Claude Code a real project-management system — cards, sprints, comments and docs — as **queryable state over MCP**, instead of spec Markdown files that grow without bound and go stale. A clean Nuxt UI mirrors the same board for humans, in real time.
+Agents Board gives Codex and Claude Code a real project-management system — cards, sprints, comments and docs — as **queryable state over MCP**, instead of spec Markdown files that grow without bound and go stale. A clean Nuxt UI mirrors the same board for humans, in real time.
 
-It ships as a **Claude Code plugin** (three skills + the MCP server), backed by a pnpm monorepo you run with Docker — one command delivers the skills *and* registers the MCP, no `claude mcp add`.
+It ships separate plugin packages for **Codex and Claude Code**, each with host-native skills, review orchestration, and an MCP connection. Install it from your client's repository marketplace and the matching package becomes available together with the local MCP connection.
 
 <br/>
 
@@ -14,12 +14,12 @@ It ships as a **Claude Code plugin** (three skills + the MCP server), backed by 
 
 <br/>
 
-<img src="docs/screenshots/board.png" alt="Claude Organizer board — a sprint with cards across To do / In progress / Review / Done" width="100%"/>
+<img src="docs/screenshots/board.png" alt="Agents Board — a sprint with cards across To do / In progress / Review / Done" width="100%"/>
 
 </div>
 
 > [!WARNING]
-> **Early stage — not yet stable.** Claude Organizer is under active development and not production-stable yet. Right now we're focused on **stabilizing the skills** (the `plan` / `implement` workflow the agent runs), so their behavior and the tool surface may still change between versions. Expect breaking changes — so keep the plugin's **auto-update off** (toggle it under `/plugin` → Marketplaces) and upgrade deliberately.
+> **Early stage — not yet stable.** Agents Board is under active development and not production-stable yet. Right now we're focused on **stabilizing the skills** (the `plan` / `implement` workflow the agent runs), so their behavior and the tool surface may still change between versions. Expect breaking changes and upgrade the plugin deliberately through Codex's `/plugins` browser or CLI, or through Claude Code's plugin marketplace.
 
 ---
 
@@ -27,7 +27,7 @@ It ships as a **Claude Code plugin** (three skills + the MCP server), backed by 
 
 A long-running coding agent has no memory between sessions. The usual fix — piling plans and decisions into ever-growing `.md` files — rots fast: the files drift from reality, contradict each other, and bloat the context window.
 
-Claude Organizer flips that. **What** to do (the active sprint, cards, backlog, comments, decisions, docs) lives in a database the AI queries on demand through MCP tools, and edits as work progresses. The agent orients itself at the start of every session by reading the board — not by re-reading stale prose. You watch the same board, drag cards, and leave comments the agent reads back.
+Agents Board flips that. **What** to do (the active sprint, cards, backlog, comments, decisions, docs) lives in a database the AI queries on demand through MCP tools, and edits as work progresses. The agent orients itself at the start of every session by reading the board — not by re-reading stale prose. You watch the same board, drag cards, and leave comments the agent reads back.
 
 ## Highlights
 
@@ -60,8 +60,8 @@ Claude Organizer flips that. **What** to do (the active sprint, cards, backlog, 
 Postgres + migrations + API + UI + MCP, in one shot:
 
 ```bash
-git clone https://github.com/fmilioni/claude-organizer.git
-cd claude-organizer
+git clone https://github.com/fmilioni/agents-board.git
+cd agents-board
 cp .env.example .env
 docker compose up -d --build
 ```
@@ -76,9 +76,9 @@ docker compose up -d --build
 `cp .env.example .env` already ships working defaults for local Docker; the values worth knowing:
 
 ```bash
-POSTGRES_USER=organizer
-POSTGRES_PASSWORD=organizer
-POSTGRES_DB=organizer
+POSTGRES_USER=agents_board
+POSTGRES_PASSWORD=agents_board
+POSTGRES_DB=agents_board
 POSTGRES_PORT=5544                       # host port (in-container is 5432)
 API_PORT=4400
 NUXT_PUBLIC_API_URL=http://127.0.0.1:4400
@@ -86,65 +86,78 @@ NUXT_PUBLIC_API_URL=http://127.0.0.1:4400
 # MCP_PUBLIC_URL=http://127.0.0.1:4402    # public URL clients reach the MCP at
 ```
 
-Migrations run automatically before the API and MCP start, and a one-shot `backfill` then (re)builds the semantic-search vectors for any content missing them — so upgrading is just `docker compose up -d --build`, no manual step. The embedding model loads in its own `embedding` service; the API and MCP call it over HTTP and fall back to lexical search if it's down. Postgres data persists under `./docker/data/postgres`. Out of the box the board is **open** (no login) — see [Authentication](#authentication) to turn sign-in on.
+Migrations run automatically before the API and MCP start, and a one-shot `backfill` then (re)builds the semantic-search vectors for any content missing them. The embedding model loads in its own `embedding` service; the API and MCP call it over HTTP and fall back to lexical search if it's down. Postgres data persists under `./docker/data/agents-board-postgres`. Out of the box the board is **open** (no login) — see [Authentication](#authentication) to turn sign-in on.
 
-### 2. Install the plugin
+#### Upgrade from Claude Organizer
 
-The plugin delivers the **skills** *and* registers the **MCP** — no `claude mcp add` needed.
+Export a backup from the Claude Organizer UI, then import it from the Agents Board UI. There is no automatic database migration between the two projects.
 
-From a clone:
+### 2. Install the plugin for your coding agent
+
+Each client has its own plugin package. Both deliver the **skills** *and* register the **MCP** without sharing host-specific workflow files.
+
+#### Codex
+
+Add this repository as a Codex marketplace, then install its plugin:
 
 ```bash
-claude --plugin-dir plugins/claude-organizer
+codex plugin marketplace add fmilioni/agents-board
+codex plugin add agents-board@agents-board
 ```
 
-Or via the marketplace:
+You can inspect or manage it interactively with `/plugins` in Codex CLI. Start a new Codex task after installation so its bundled skills and tools are loaded. The `agents-board` tools point at local Docker (`http://127.0.0.1:4402/mcp`) by default.
+
+#### Claude Code
+
+Add the same repository through Claude Code's marketplace and install the plugin:
 
 ```text
-/plugin marketplace add fmilioni/claude-organizer
-/plugin install claude-organizer@claude-organizer
+/plugin marketplace add fmilioni/agents-board
+/plugin install agents-board@agents-board
 ```
 
-The `claude-organizer` tools appear automatically, pointing at local Docker (`http://127.0.0.1:4402/mcp`). Local Docker needs nothing more; to reach another host, see the next section.
+Start a new Claude Code session after installation. The tracked `CLAUDE.md` forwards to the shared `AGENTS.md`, so both clients follow the same repository rules and workflows.
 
 ### 3. Configure the MCP for a remote host
 
-Local Docker is the default — nothing to do: the bundled plugin already registers a `claude-organizer` server at `http://127.0.0.1:4402/mcp`.
+Local Docker is the default — nothing to do: the bundled plugin already registers an `agents-board` server at `http://127.0.0.1:4402/mcp`.
 
-**Repoint the bundled entry with `CO_MCP_URL`.** To make the **primary** board live on another machine — sharing one board across several computers — just export `CO_MCP_URL` before starting Claude Code; the plugin's `claude-organizer` server uses it instead of `http://127.0.0.1:4402/mcp`, keeping the same tool prefix. Reach it over a stable hostname (a Tailscale MagicDNS name like `host.tailnet.ts.net`, a LAN host, or a remote domain). Pair it with **`CO_API_URL`** (default `http://127.0.0.1:4400`) pointed at the same host — the helper scripts (`attach-commit` / `attach-worktree-diff` / `attach-image`) post to the API directly, so without it they'd hit the client machine's own `localhost` and fail:
-
-```bash
-export CO_MCP_URL=http://host.tailnet.ts.net:4402/mcp
-export CO_API_URL=http://host.tailnet.ts.net:4400
-```
-
-**Or register an additional named server.** To run another board *alongside* the bundled one, register it as an **additional** server with a name **other than `claude-organizer`** (that one is the plugin's — reusing it clashes):
+To use a board on another machine, register it as an additional named MCP server. Reach it over a stable hostname (a Tailscale MagicDNS name like `host.tailnet.ts.net`, a LAN host, or a remote domain). Pair it with **`AB_API_URL`** (default `http://127.0.0.1:4400`) pointed at the same host — the helper scripts (`attach-commit` / `attach-worktree-diff` / `attach-image`) post to the API directly, so without it they'd hit the client machine's own `localhost` and fail:
 
 ```bash
-claude mcp add --transport http -s user claude-organizer-remote https://mcp.<domain>/mcp
+export AB_API_URL=http://host.tailnet.ts.net:4400
+codex mcp add agents-board-remote --url http://host.tailnet.ts.net:4402/mcp
 ```
 
-Each server gets its own tool prefix (the bundled plugin board is `mcp__plugin_claude-organizer_claude-organizer__*`; this added one is `mcp__claude-organizer-remote__*`), OAuth session and projects; the skills pick the one whose project matches the repo and never mix them. `-s user` makes it available across all repos — to bind **a single project** to a specific server instead, scope it to the repo with `-s project` (a shared `.mcp.json` committed in the repo) or `-s local` (only you, only this repo).
+Use a name **other than `agents-board`** because that name belongs to the bundled plugin. For a repository-scoped connection instead of a user-level one, add it to the trusted project's `.codex/config.toml`:
+
+```toml
+[mcp_servers.agents-board-remote]
+url = "https://mcp.<domain>/mcp"
+```
+
+Each server gets its own tool namespace, OAuth session and projects; the skills pick the one whose project matches the repo and never mix them.
 
 ## Usage
 
-**You drive everything through one entry point** — the main `claude-organizer` command — and it routes to plan / implement for you:
+**You can drive everything through one entry point** — `$agents-board` — or invoke `$plan` and `$implement` directly:
 
 ```text
-/claude-organizer:claude-organizer plan github authentication
-/claude-organizer:claude-organizer implement task CO-123
-/claude-organizer:claude-organizer run story CO-127 all at once
+$agents-board plan GitHub authentication
+$plan break GitHub authentication into cards
+$implement task AB-123
+$implement run story AB-127 all at once
 ```
 
-Pass it your intent in plain language (any language) and it picks the right skill. The three skills behind it:
+Pass it your intent in plain language (any language) and it picks the right workflow. The three user-facing skills are:
 
 | Skill | What it does | Triggers when… |
 | --- | --- | --- |
-| **`claude-organizer`** | The entry point: what the board is, which skill to use, and binding the repo to its project (record `projectId` + auth flag in `CLAUDE.md`). | you reference the board — *"let's continue", "what's next?"* |
+| **`agents-board`** | The entry point: what the board is, which skill to use, and binding the repo to its project (record `projectId` + auth flag in `.agents-board.local.md`). | you reference the board — *"let's continue", "what's next?"* |
 | **`plan`** | Turn a fuzzy new demand into structured work (sprint → stories → tasks), get the design approved, then create the cards. | you describe something new to build, before it's broken down. |
-| **`implement`** | Execute existing cards through their lifecycle (`in_progress` → implement → review → commit), single-card or a multi-card run (story/sprint) in two modes — review each card, or run the whole batch autonomously. Fires a fresh-subagent review before each card closes. | you start/resume work on a specific card or ask to run a story/sprint — *"work CO-42", "run the sprint"*. |
+| **`implement`** | Execute existing cards through their lifecycle, either guided or in autopilot. Standalone cards get an isolated review; story children normally share a story-level review, with earlier review when risk warrants it. Autopilot delegates isolated units through worktrees and integrates them centrally. | you start/resume work on a specific card or ask to run a story/sprint — *"work AB-42", "run the sprint"*. |
 
-For a multi-card run, `implement` asks how to drive it: **review each card** (stop for your validation between cards) or **run it all at once** (execute the batch autonomously). In both modes it commits one-per-card on the git flow you agree, runs the review gate (and a story-level review when a story's last child finishes), and leaves each card in `review` for your final validation — it never merges on its own (no PR unless you ask). The review itself runs in a read-only **`reviewer`** subagent dispatched by `implement`.
+For a multi-card run, `implement` asks how to drive it: **guided** (stop for your validation between cards) or **autopilot** (analyze dependencies, delegate isolated execution units to subagents/worktrees, integrate their one-per-card commits, then validate the assembled batch). A standalone card always gets a read-only **`reviewer`** subagent. Story children normally wait for one complete story review, but the executor can request an earlier per-card review for large, complex, foundational or otherwise risky work. Nested reviewers are preferred in autopilot, with an orchestrator fallback when the executor cannot dispatch one. Cards stay in `review` for your final validation, and the agent never merges a PR on its own.
 
 ### Inbox
 
@@ -156,7 +169,7 @@ Auth is built on [better-auth](https://better-auth.com) and is **off by default*
 
 - **Methods** — email+password is the zero-config base; **GitHub OAuth** is optional and only appears when `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` are set (callback `https://api.<domain>/api/auth/callback/github`). No host is forced to register an OAuth app.
 - **Access** — users get **roles** and **per-project access**; admins manage who can see what.
-- **MCP** — with auth on, `/mcp` is an OAuth 2.1 resource server and the plugin obtains a bearer automatically (so `CO_MCP_URL` is still all you set). With auth off, `/mcp` is open, mirroring the open board.
+- **MCP** — with auth on, `/mcp` is an OAuth 2.1 resource server and compatible MCP clients obtain a bearer automatically. With auth off, `/mcp` is open, mirroring the open board.
 
 Relevant env (see `.env.example`):
 
@@ -184,17 +197,17 @@ Point DNS for the three subdomains at the host; Caddy issues/renews TLS (ACME). 
 
 ### Signing in from a terminal-only box (WSL, SSH, headless)
 
-With auth on, Claude Code runs the OAuth flow by opening a browser and waiting on a **local loopback callback** (`http://localhost:<random-port>/…`). In a terminal-only environment that stalls — no browser opens (Claude Code prints the URL instead — open it yourself), and the loopback redirect must be able to reach back into the box (WSL2 forwards `localhost` by default; over SSH, forward the port with `ssh -L <port>:localhost:<port> …`). Keep one host throughout — don't mix `localhost` and `127.0.0.1`, or the login won't stick.
+With auth on, the MCP client runs the OAuth flow by opening a browser and waiting on a **local loopback callback** (`http://localhost:<random-port>/…`). In a terminal-only environment that stalls — no browser opens (the client prints the URL instead — open it yourself), and the loopback redirect must be able to reach back into the box (WSL2 forwards `localhost` by default; over SSH, forward the port with `ssh -L <port>:localhost:<port> …`). Keep one host throughout — don't mix `localhost` and `127.0.0.1`, or the login won't stick.
 
-**The reliable escape hatch:** auth is **off by default** and an open board needs no login at all. For a local/WSL dev box, leave auth off and skip the loopback flow entirely; turn auth on where a browser-reachable login exists — e.g. a remote deployment behind the reverse proxy, reached over normal `https://`. The loopback dance is Claude Code's MCP client plus your box's networking; Claude Organizer is a standard OAuth 2.1 resource server and can't shortcut it server-side.
+**The reliable escape hatch:** auth is **off by default** and an open board needs no login at all. For a local/WSL dev box, leave auth off and skip the loopback flow entirely; turn auth on where a browser-reachable login exists — e.g. a remote deployment behind the reverse proxy, reached over normal `https://`. The loopback dance depends on the MCP client and your box's networking; Agents Board is a standard OAuth 2.1 resource server and can't shortcut it server-side.
 
 ## Architecture
 
 ```text
-Claude Code ──HTTP──▶ MCP (:4402/mcp) ─┐
-                                       ├─▶ core ──▶ Postgres 16
-Browser (SPA) ──HTTP──▶ API (:4400) ───┘   (+ WebSocket /ws for real-time)
-                            └─ core ──HTTP──▶ Embedding service (:4403) ──▶ model
+Coding agent ─HTTP──▶ MCP (:4402/mcp) ──┐
+                                        ├─▶ core ──▶ Postgres 16
+Browser (SPA) ──HTTP──▶ API (:4400) ────┘   (+ WebSocket /ws for real-time)
+                             └─ core ──HTTP──▶ Embedding service (:4403) ──▶ model
 ```
 
 A pnpm monorepo under `packages/`:

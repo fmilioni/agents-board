@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-import { createDb } from '@claude-organizer/db'
+import { createDb } from '@agents-board/db'
 
 import { startHttpServer } from './http'
 
 const databaseUrl = process.env.DATABASE_URL
 if (!databaseUrl) {
   console.error(
-    '[claude-organizer-mcp] DATABASE_URL env var is required (see .env.example)'
+    '[agents-board-mcp] DATABASE_URL env var is required (see .env.example)'
   )
   process.exit(1)
 }
@@ -16,7 +16,7 @@ if (!databaseUrl) {
 const port = Number(process.env.MCP_HTTP_PORT ?? 4402)
 if (!Number.isInteger(port) || port <= 0 || port > 65535) {
   console.error(
-    `[claude-organizer-mcp] invalid MCP_HTTP_PORT: ${process.env.MCP_HTTP_PORT}`
+    `[agents-board-mcp] invalid MCP_HTTP_PORT: ${process.env.MCP_HTTP_PORT}`
   )
   process.exit(1)
 }

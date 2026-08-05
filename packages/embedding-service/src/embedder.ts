@@ -1,5 +1,5 @@
-import type { EmbeddingConfig, EmbeddingDtype } from '@claude-organizer/shared'
-import { DEFAULT_EMBEDDING_DIM, DEFAULT_EMBEDDING_DTYPE } from '@claude-organizer/shared'
+import type { EmbeddingConfig, EmbeddingDtype } from '@agents-board/shared'
+import { DEFAULT_EMBEDDING_DIM, DEFAULT_EMBEDDING_DTYPE } from '@agents-board/shared'
 
 export type EmbeddingKind = 'query' | 'passage'
 

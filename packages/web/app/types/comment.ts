@@ -1,1 +1,1 @@
-export type { Comment, CommentAuthor } from '@claude-organizer/shared'
+export type { Comment, CommentAuthor } from '@agents-board/shared'

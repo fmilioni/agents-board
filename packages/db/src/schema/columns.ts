@@ -1,6 +1,6 @@
 import { customType } from 'drizzle-orm/pg-core'
 
-import { DEFAULT_EMBEDDING_DIM } from '@claude-organizer/shared'
+import { DEFAULT_EMBEDDING_DIM } from '@agents-board/shared'
 
 /** Postgres `tsvector` column for full-text search (docs, cards, comments). */
 export const tsvector = customType<{ data: string }>({

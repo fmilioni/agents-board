@@ -1,16 +1,16 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "claude-organizer",
-  "description": "Marketplace do Claude Organizer — skills de uso e de planejamento do board.",
+  "name": "agents-board",
+  "description": "Agents Board workflows and MCP connection for AI coding agents.",
   "owner": {
     "name": "Felipe Milioni"
   },
   "plugins": [
     {
-      "name": "claude-organizer",
-      "description": "Skills do claude-organizer: usar o board (cards, comentários, docs) e planejar demandas (plan) — board exposto via MCP.",
-      "version": "0.35.1",
-      "source": "./plugins/claude-organizer",
+      "name": "agents-board",
+      "description": "Plan and execute coding work through the Agents Board MCP project board.",
+      "version": "0.36.0",
+      "source": "./plugins/claude-code/agents-board",
       "category": "productivity"
     }
   ]

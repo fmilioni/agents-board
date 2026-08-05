@@ -35,16 +35,16 @@ importers:
 
   packages/api:
     dependencies:
-      '@claude-organizer/auth':
+      '@agents-board/auth':
         specifier: workspace:*
         version: link:../auth
-      '@claude-organizer/core':
+      '@agents-board/core':
         specifier: workspace:*
         version: link:../core
-      '@claude-organizer/db':
+      '@agents-board/db':
         specifier: workspace:*
         version: link:../db
-      '@claude-organizer/shared':
+      '@agents-board/shared':
         specifier: workspace:*
         version: link:../shared
       '@fastify/cors':
@@ -90,10 +90,10 @@ importers:
 
   packages/auth:
     dependencies:
-      '@claude-organizer/core':
+      '@agents-board/core':
         specifier: workspace:*
         version: link:../core
-      '@claude-organizer/db':
+      '@agents-board/db':
         specifier: workspace:*
         version: link:../db
       better-auth:
@@ -109,10 +109,10 @@ importers:
 
   packages/core:
     dependencies:
-      '@claude-organizer/db':
+      '@agents-board/db':
         specifier: workspace:*
         version: link:../db
-      '@claude-organizer/shared':
+      '@agents-board/shared':
         specifier: workspace:*
         version: link:../shared
       drizzle-orm:
@@ -140,7 +140,7 @@ importers:
 
   packages/db:
     dependencies:
-      '@claude-organizer/shared':
+      '@agents-board/shared':
         specifier: workspace:*
         version: link:../shared
       drizzle-orm:
@@ -168,13 +168,13 @@ importers:
 
   packages/embedding-service:
     dependencies:
-      '@claude-organizer/core':
+      '@agents-board/core':
         specifier: workspace:*
         version: link:../core
-      '@claude-organizer/db':
+      '@agents-board/db':
         specifier: workspace:*
         version: link:../db
-      '@claude-organizer/shared':
+      '@agents-board/shared':
         specifier: workspace:*
         version: link:../shared
       '@huggingface/transformers':
@@ -199,16 +199,16 @@ importers:
 
   packages/mcp:
     dependencies:
-      '@claude-organizer/auth':
+      '@agents-board/auth':
         specifier: workspace:*
         version: link:../auth
-      '@claude-organizer/core':
+      '@agents-board/core':
         specifier: workspace:*
         version: link:../core
-      '@claude-organizer/db':
+      '@agents-board/db':
         specifier: workspace:*
         version: link:../db
-      '@claude-organizer/shared':
+      '@agents-board/shared':
         specifier: workspace:*
         version: link:../shared
       '@modelcontextprotocol/sdk':
@@ -242,7 +242,7 @@ importers:
 
   packages/web:
     dependencies:
-      '@claude-organizer/shared':
+      '@agents-board/shared':
         specifier: workspace:*
         version: link:../shared
       '@nuxt/ui':

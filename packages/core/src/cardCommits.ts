@@ -1,8 +1,8 @@
 import { and, asc, eq, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
-import { createId, type Database, schema } from '@claude-organizer/db'
-import { parseDiffImageSentinel, WORKING_TREE_SHA } from '@claude-organizer/shared'
+import { createId, type Database, schema } from '@agents-board/db'
+import { parseDiffImageSentinel, WORKING_TREE_SHA } from '@agents-board/shared'
 
 import { reconcileAttachmentLinks } from './attachmentLinks'
 import { InputError } from './errors'

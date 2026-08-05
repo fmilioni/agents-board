@@ -1,13 +1,13 @@
 import { sql } from 'drizzle-orm'
 
-import type { Database } from '@claude-organizer/db'
-import type { CoEvent } from '@claude-organizer/shared'
+import type { Database } from '@agents-board/db'
+import type { AbEvent } from '@agents-board/shared'
 
-export type { CoEvent } from '@claude-organizer/shared'
+export type { AbEvent } from '@agents-board/shared'
 
-export const EVENT_CHANNEL = 'co_events'
+export const EVENT_CHANNEL = 'ab_events'
 
-export async function notify(db: Database, event: CoEvent): Promise<void> {
+export async function notify(db: Database, event: AbEvent): Promise<void> {
   const payload = JSON.stringify(event)
   await db.execute(
     sql`SELECT pg_notify(${EVENT_CHANNEL}, ${payload})`

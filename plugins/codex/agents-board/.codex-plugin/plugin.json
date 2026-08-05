@@ -1,0 +1,43 @@
+{
+  "name": "agents-board",
+  "version": "0.36.0",
+  "description": "Project management for AI coding work through cards, sprints, roadmaps, and docs.",
+  "author": {
+    "name": "Felipe Milioni",
+    "url": "https://github.com/fmilioni"
+  },
+  "homepage": "https://github.com/fmilioni/agents-board",
+  "repository": "https://github.com/fmilioni/agents-board",
+  "license": "MIT",
+  "keywords": [
+    "project-management",
+    "tasks",
+    "sprints",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "mcpServers": {
+    "agents-board": {
+      "type": "http",
+      "url": "http://127.0.0.1:4402/mcp"
+    }
+  },
+  "interface": {
+    "displayName": "Agents Board",
+    "shortDescription": "Manage AI coding work from a shared project board.",
+    "longDescription": "Plan and track cards, sprints, roadmaps, and project documentation through the local Agents Board MCP server.",
+    "developerName": "Felipe Milioni",
+    "category": "Productivity",
+    "capabilities": [
+      "Project Management",
+      "Task Planning",
+      "MCP"
+    ],
+    "websiteURL": "https://github.com/fmilioni/agents-board",
+    "defaultPrompt": [
+      "Show me the current project board.",
+      "Plan the next sprint from the open cards.",
+      "Create and organize cards for this feature."
+    ]
+  }
+}

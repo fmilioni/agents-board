@@ -1,4 +1,4 @@
-export type { Tag } from '@claude-organizer/shared'
+export type { Tag } from '@agents-board/shared'
 
 /** Fixed palette offered when creating a tag (stored as hex). */
 export const TAG_COLORS: string[] = [

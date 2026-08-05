@@ -1,8 +1,8 @@
 import { desc, eq, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
-import { createId, type Database, schema } from '@claude-organizer/db'
-import { ATTACHMENT_MIME_TYPES } from '@claude-organizer/shared'
+import { createId, type Database, schema } from '@agents-board/db'
+import { ATTACHMENT_MIME_TYPES } from '@agents-board/shared'
 
 import { sweepOrphanAttachments } from './attachmentGc'
 

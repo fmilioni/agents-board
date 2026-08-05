@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { sql } from 'drizzle-orm'
 import { afterAll, beforeAll, inject } from 'vitest'
 
-import { createDb, type Database } from '@claude-organizer/db'
+import { createDb, type Database } from '@agents-board/db'
 
 import { createProject } from '../src/index'
 
@@ -58,7 +58,7 @@ export function useTestDb(): TestDb {
  * Create an isolated project so each test operates in its own namespace.
  * The slug uses a random UUID so the projects a file creates never collide.
  */
-export function freshProject(db: Database, keyPrefix = 'CO') {
+export function freshProject(db: Database, keyPrefix = 'AB') {
   const suffix = randomUUID().replace(/-/g, '').slice(0, 12)
   return createProject(db, {
     name: `Test Project ${suffix}`,
@@ -70,7 +70,7 @@ export function freshProject(db: Database, keyPrefix = 'CO') {
 /**
  * A unique key prefix. Card keys are unique only per project
  * (`cards_project_key_uk`), but `getCardByKey` / `attachCardCommit` resolve a
- * card BY KEY alone — so `CO-1` is ambiguous across the several default-prefix
+ * card BY KEY alone — so `AB-1` is ambiguous across the several default-prefix
  * projects a single file creates. Tests that go through those paths must use
  * this, or the lookup may hit another test's same-key card.
  */

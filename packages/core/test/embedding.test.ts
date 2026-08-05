@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 
-import { resolveEmbeddingConfig } from '@claude-organizer/shared'
+import { resolveEmbeddingConfig } from '@agents-board/shared'
 
 import { reciprocalRankFusion } from '../src/index'
 import { useTestDb } from './helpers'

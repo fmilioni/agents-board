@@ -1,4 +1,4 @@
-import type { AuthCapabilities, SessionUser } from '@claude-organizer/shared'
+import type { AuthCapabilities, SessionUser } from '@agents-board/shared'
 
 export function useAuth() {
   const api = useApi()

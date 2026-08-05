@@ -1,12 +1,12 @@
 import { type MaybeRefOrGetter, toValue } from 'vue'
 
-import type { CoSocketMessage } from '@claude-organizer/shared'
+import type { AbSocketMessage } from '@agents-board/shared'
 
-export type { CoEvent, CoSocketMessage } from '@claude-organizer/shared'
+export type { AbEvent, AbSocketMessage } from '@agents-board/shared'
 
 export function useProjectEvents(
   projectId: MaybeRefOrGetter<string | null | undefined>,
-  handler: (event: CoSocketMessage) => void
+  handler: (event: AbSocketMessage) => void
 ) {
   if (import.meta.server) return
 
@@ -22,9 +22,9 @@ export function useProjectEvents(
   useWebSocket(url, {
     autoReconnect: { delay: 2000 },
     onMessage: (_ws, e) => {
-      let message: CoSocketMessage | undefined
+      let message: AbSocketMessage | undefined
       try {
-        message = JSON.parse(e.data) as CoSocketMessage
+        message = JSON.parse(e.data) as AbSocketMessage
       } catch {
         return
       }

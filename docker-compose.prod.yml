@@ -11,7 +11,7 @@
 services:
   caddy:
     image: caddy:2-alpine
-    container_name: claude-organizer-caddy
+    container_name: agents-board-caddy
     restart: unless-stopped
     ports:
       - "80:80"

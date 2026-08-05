@@ -1,6 +1,6 @@
 import { and, eq, gt, lt, sql } from 'drizzle-orm'
 
-import { type Database, schema } from '@claude-organizer/db'
+import { type Database, schema } from '@agents-board/db'
 
 export const MCP_TOKEN_PATH = '/api/auth/mcp/token'
 

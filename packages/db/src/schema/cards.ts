@@ -38,7 +38,7 @@ export const cards = pgTable(
     priority: integer('priority').notNull().default(0),
     dueDate: timestamp('due_date', { withTimezone: true }),
     position: integer('position').notNull().default(0),
-    // Including `key` is deliberate: searching "CO-42" finds the card itself.
+    // Including `key` is deliberate: searching "AB-42" finds the card itself.
     searchTsv: tsvector('search_tsv').generatedAlwaysAs(
       sql`to_tsvector('simple', coalesce(key, '') || ' ' || coalesce(title, '') || ' ' || coalesce(summary, '') || ' ' || coalesce(description_md, ''))`
     ),

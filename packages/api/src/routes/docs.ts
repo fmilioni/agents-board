@@ -10,9 +10,9 @@ import {
   restoreDoc,
   searchDocs,
   updateDoc
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
-import { DOC_KINDS } from '@claude-organizer/shared'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
+import { DOC_KINDS } from '@agents-board/shared'
 
 import { projectIdQuery, queryBool } from '../lib/query'
 

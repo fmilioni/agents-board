@@ -1,6 +1,6 @@
 import { type MaybeRefOrGetter, toValue, watch, type WatchSource } from 'vue'
 
-import type { CoSocketMessage } from '@claude-organizer/shared'
+import type { AbSocketMessage } from '@agents-board/shared'
 
 interface UseProjectDataOptions {
   /**
@@ -10,7 +10,7 @@ interface UseProjectDataOptions {
    */
   watch?: WatchSource | WatchSource[]
   /** React to the project's realtime events (reload, refresh the selection, …). */
-  onEvent?: (event: CoSocketMessage) => void
+  onEvent?: (event: AbSocketMessage) => void
 }
 
 /**

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Project } from '@claude-organizer/shared'
+import type { Project } from '@agents-board/shared'
 
 import { useProjectStore } from '~/stores/project'
 

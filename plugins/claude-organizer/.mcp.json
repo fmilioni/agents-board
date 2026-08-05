@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "claude-organizer": {
-      "type": "http",
-      "url": "${CO_MCP_URL:-http://127.0.0.1:4402/mcp}"
-    }
-  }
-}

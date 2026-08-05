@@ -6,8 +6,8 @@ import {
   getCardByKey,
   releaseCard,
   takeOverCard
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 import { asJson } from './index'
 
@@ -25,7 +25,7 @@ export function registerCardClaimTools(server: McpServer, db: Database) {
       description:
         'Reserve a task/story for your session (advisory — signals it is in your work buffer so other sessions/machines do not start the same work; nothing is locked). Reserving a STORY also reserves its not-yet-started children. If the card is already held by ANOTHER session, returns `{ ok:false, conflict:true, claim }` WITHOUT changing it — ask the user before take_over_task. Claim state also shows on get_card/list_cards (`claim`).',
       inputSchema: {
-        cardKey: z.string().describe('Card key, e.g. \'CO-12\'.'),
+        cardKey: z.string().describe('Card key, e.g. \'AB-12\'.'),
         sessionToken,
         label: z
           .string()
@@ -53,7 +53,7 @@ export function registerCardClaimTools(server: McpServer, db: Database) {
       description:
         'Release your session\'s claim on a task/story (owner only — your sessionToken must match). A story also releases the children claims held by the same token. Releasing an unclaimed card is a no-op. Completing a task (status done) already releases it automatically.',
       inputSchema: {
-        cardKey: z.string().describe('Card key, e.g. \'CO-12\'.'),
+        cardKey: z.string().describe('Card key, e.g. \'AB-12\'.'),
         sessionToken
       }
     },
@@ -72,7 +72,7 @@ export function registerCardClaimTools(server: McpServer, db: Database) {
       description:
         'Take over a task/story claimed by another session, swapping the claim to your sessionToken. Use ONLY after the user explicitly confirms the take-over (the previous session may have crashed/been interrupted). A story also transfers its not-yet-started and already-claimed children.',
       inputSchema: {
-        cardKey: z.string().describe('Card key, e.g. \'CO-12\'.'),
+        cardKey: z.string().describe('Card key, e.g. \'AB-12\'.'),
         sessionToken,
         label: z
           .string()

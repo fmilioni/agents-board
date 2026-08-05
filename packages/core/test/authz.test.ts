@@ -3,8 +3,8 @@ import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { schema } from '@claude-organizer/db'
-import { EMBEDDING_RUNTIME_SERVICE } from '@claude-organizer/shared'
+import { schema } from '@agents-board/db'
+import { EMBEDDING_RUNTIME_SERVICE } from '@agents-board/shared'
 
 import {
   addComment,

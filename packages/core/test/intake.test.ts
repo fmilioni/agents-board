@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 
-import { schema } from '@claude-organizer/db'
+import { schema } from '@agents-board/db'
 
 import {
   archiveCard,

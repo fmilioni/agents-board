@@ -9,7 +9,7 @@ import {
 
 import { cards } from './cards'
 
-// Commits whose message references a card key (`feat(...): … (CO-94)`). The diff
+// Commits whose message references a card key (`feat(...): … (AB-94)`). The diff
 // is captured locally by the CLI script and POSTed here; the server never reads
 // the git repo. Unique `(card_id, sha)` is the dedupe key (re-attaching upserts).
 export const cardCommits = pgTable(

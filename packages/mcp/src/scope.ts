@@ -6,9 +6,9 @@ import {
   resolveCardsProjectIds,
   resolveCommentsProjectIds,
   resolveEntityProjectId
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
-import type { UserRole, UserStatus } from '@claude-organizer/shared'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
+import type { UserRole, UserStatus } from '@agents-board/shared'
 
 // The project scope of an authenticated MCP session — the same model the REST
 // auth-enforcement gate applies. `null` means unrestricted (sem-auth mode), so

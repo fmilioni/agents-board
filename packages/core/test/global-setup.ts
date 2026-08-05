@@ -2,11 +2,11 @@ import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import { PostgreSqlContainer } from '@testcontainers/postgresql'
 import { sql } from 'drizzle-orm'
 
-import { createDb, runMigrations } from '@claude-organizer/db'
+import { createDb, runMigrations } from '@agents-board/db'
 
 let container: StartedPostgreSqlContainer
 
-const TEMPLATE_DB = 'co_test_template'
+const TEMPLATE_DB = 'ab_test_template'
 
 // Spins one ephemeral Postgres for the whole suite and migrates a single
 // template database on it. Each test file then clones that template into a

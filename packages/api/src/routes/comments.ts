@@ -8,9 +8,9 @@ import {
   listUnhandledCommentsForProject,
   markCommentsHandled,
   updateComment
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
-import { COMMENT_AUTHORS } from '@claude-organizer/shared'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
+import { COMMENT_AUTHORS } from '@agents-board/shared'
 
 import { projectIdQuery, queryBool } from '../lib/query'
 

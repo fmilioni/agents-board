@@ -15,7 +15,7 @@ import type {
  * REST API serializes and the UI receives), not `Date`s.
  *
  * These mirror the Drizzle schema column-for-column and are kept in lockstep by
- * a compile-time conformance check in @claude-organizer/db (src/conformance.ts):
+ * a compile-time conformance check in @agents-board/db (src/conformance.ts):
  * adding, renaming or retyping a column there breaks `pnpm typecheck` until the
  * matching field here is updated. The DTOs below build on these rows.
  */

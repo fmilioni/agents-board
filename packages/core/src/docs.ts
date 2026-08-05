@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, gt, gte, ilike, inArray, isNotNull, notInArray, or, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
-import { createId, type Database, schema } from '@claude-organizer/db'
+import { createId, type Database, schema } from '@agents-board/db'
 
 import type { ArchiveFilter } from './archive'
 import { gcAttachmentsOnDestroy } from './attachmentGc'

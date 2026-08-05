@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Project } from '@claude-organizer/shared'
+import type { Project } from '@agents-board/shared'
 
 import { useProjectStore } from '~/stores/project'
 
@@ -97,9 +97,9 @@ async function submit() {
         </UFormField>
         <UFormField
           label="Key prefix"
-          hint="Used in card keys (e.g. CO-1)"
+          hint="Used in card keys (e.g. AB-1)"
         >
-          <UInput v-model="form.keyPrefix" placeholder="CO" />
+          <UInput v-model="form.keyPrefix" placeholder="AB" />
         </UFormField>
         <UFormField label="Description">
           <UTextarea v-model="form.description" :rows="3" />

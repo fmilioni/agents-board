@@ -14,8 +14,8 @@ import {
   restoreSprint,
   startSprint,
   updateSprint
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 import { projectIdQuery, queryBool } from '../lib/query'
 

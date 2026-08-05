@@ -12,9 +12,9 @@ import {
   restoreCard,
   searchCards,
   updateCard
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
-import { CARD_STATUSES } from '@claude-organizer/shared'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
+import { CARD_STATUSES } from '@agents-board/shared'
 
 import { projectIdQuery, queryBool } from '../lib/query'
 

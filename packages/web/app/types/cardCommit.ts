@@ -1,1 +1,1 @@
-export type { CardCommit } from '@claude-organizer/shared'
+export type { CardCommit } from '@agents-board/shared'

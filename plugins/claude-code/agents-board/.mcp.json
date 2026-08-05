@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "agents-board": {
+      "type": "http",
+      "url": "${AB_MCP_URL:-http://127.0.0.1:4402/mcp}"
+    }
+  }
+}

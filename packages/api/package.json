@@ -1,6 +1,6 @@
 {
-  "name": "@claude-organizer/api",
-  "version": "0.35.1",
+  "name": "@agents-board/api",
+  "version": "0.36.0",
   "private": true,
   "type": "module",
   "main": "./dist/server.mjs",
@@ -13,10 +13,10 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@claude-organizer/auth": "workspace:*",
-    "@claude-organizer/core": "workspace:*",
-    "@claude-organizer/db": "workspace:*",
-    "@claude-organizer/shared": "workspace:*",
+    "@agents-board/auth": "workspace:*",
+    "@agents-board/core": "workspace:*",
+    "@agents-board/db": "workspace:*",
+    "@agents-board/shared": "workspace:*",
     "@fastify/cors": "11.2.0",
     "@fastify/multipart": "10.0.0",
     "@fastify/websocket": "11.2.0",

@@ -1,5 +1,5 @@
-import { type AttachmentItemType, listAttachmentsByItems } from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+import { type AttachmentItemType, listAttachmentsByItems } from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 type AttachmentLinkRow = Awaited<ReturnType<typeof listAttachmentsByItems>>[number]
 

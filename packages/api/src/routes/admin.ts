@@ -14,9 +14,9 @@ import {
   setIncludeAttachmentsInBackup,
   setKeepAttachmentsOnArchive,
   setKeepDiffsOnArchive
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
-import { USER_ROLES } from '@claude-organizer/shared'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
+import { USER_ROLES } from '@agents-board/shared'
 
 // These routes are admin-only — enforced centrally in the auth-enforcement
 // preHandler (ADMIN_ONLY), so the handlers don't re-check the role.

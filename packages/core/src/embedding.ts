@@ -1,4 +1,4 @@
-import type { Database } from '@claude-organizer/db'
+import type { Database } from '@agents-board/db'
 
 import { chunkText } from './chunking'
 

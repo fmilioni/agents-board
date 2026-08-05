@@ -30,9 +30,15 @@ Thumbs.db
 docker/data
 
 # Local, non-committed project memory (board binding, deployment-specific config)
+.agents-board.local.md
+# Legacy pre-rename binding may still contain private clone-specific settings.
+.claude-organizer.local.md
+# Legacy Claude Code binding may still contain private clone-specific settings.
 CLAUDE.local.md
 
-# Run worktrees (local, per-run isolation)
+# Codex worktrees (local, per-task isolation)
+.codex/worktrees/
+# Legacy Claude Code worktrees remain local for compatibility.
 .claude/worktrees/
 
 # Per-machine Claude Code settings (personal permission allowlist)

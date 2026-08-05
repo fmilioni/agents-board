@@ -6,6 +6,7 @@ import type { Database } from '@agents-board/db'
 import packageJson from '../package.json'
 import { registerResources } from './resources/index'
 import { assertToolAccess, type McpScope } from './scope'
+import { withToolContract } from './tool-contracts'
 import { registerTools } from './tools/index'
 
 type ToolHandler = (input: Record<string, unknown>, extra: unknown) => unknown
@@ -47,7 +48,9 @@ export function createMcpServer(db: Database, scope: McpScope | null = null) {
     const [name, config, handler] = args as [string, unknown, ToolHandler]
     return registerTool(
       name,
-      strictInputSchema(config) as Parameters<typeof registerTool>[1],
+      strictInputSchema(
+        withToolContract(name, config as Record<string, unknown>)
+      ) as Parameters<typeof registerTool>[1],
       (async (input: Record<string, unknown>, extra: unknown) => {
         await assertToolAccess(db, scope, name, input ?? {})
         return handler(input, extra)

@@ -163,6 +163,7 @@ function createFixture(options: FixtureOptions) {
     await app.register(errorHandler)
     registerAuthEnforcement(app, auth, db)
     registerProjectRoutes(app, db)
+    app.get('/ws/projects', async () => ({ ok: true }))
     await app.ready()
   }
 
@@ -216,6 +217,13 @@ describe('PATCH /projects/:id', () => {
       })
       assert.equal(user.grantReads, 0)
       assert.equal(user.project?.name, 'Old Project')
+
+      const stream = await user.app.inject({
+        method: 'GET',
+        url: '/ws/projects',
+        headers: { authorization: 'session' }
+      })
+      assert.equal(stream.statusCode, 200)
       await user.app.close()
     }
 

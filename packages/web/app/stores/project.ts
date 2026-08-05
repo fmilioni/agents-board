@@ -7,6 +7,7 @@ const CURRENT_PROJECT_COOKIE = 'agents-board.currentProjectSlug'
 export const useProjectStore = defineStore('project', () => {
   const projects = ref<Project[]>([])
   const loading = ref(true)
+  const loaded = ref(false)
   const currentSlug = useCookie<string | null>(CURRENT_PROJECT_COOKIE, {
     default: () => null,
     sameSite: 'lax',
@@ -32,6 +33,7 @@ export const useProjectStore = defineStore('project', () => {
       projects.value = []
     } finally {
       loading.value = false
+      loaded.value = true
     }
   }
 
@@ -65,6 +67,7 @@ export const useProjectStore = defineStore('project', () => {
   return {
     projects,
     loading,
+    loaded,
     currentProject,
     currentProjectId,
     currentSlug,

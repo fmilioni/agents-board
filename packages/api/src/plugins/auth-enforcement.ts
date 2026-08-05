@@ -121,7 +121,7 @@ const ADMIN_ONLY: Array<{ method: string, url: string }> = [
   { method: 'POST', url: '/admin/embedding' }
 ]
 
-export function isAdminOnly(method: string, url: string | undefined): boolean {
+function isAdminOnly(method: string, url: string | undefined): boolean {
   return ADMIN_ONLY.some(r => r.method === method && r.url === url)
 }
 
@@ -264,7 +264,10 @@ export function registerAuthEnforcement(
     }
 
     if (authz.role === 'admin' || authz.allProjects) return
-    if (url === '/projects' && req.method === 'GET') return
+    if (
+      req.method === 'GET'
+      && (url === '/projects' || url === '/ws/projects')
+    ) return
 
     // Reaching here means approved + role 'user' + not allProjects, so the only
     // remaining check is the explicit grant — no need to re-read user_authz.

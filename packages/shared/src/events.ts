@@ -27,5 +27,9 @@ export interface AbHello {
   projectId: string
 }
 
-/** Any message a WebSocket client can receive on the project channel. */
-export type AbSocketMessage = AbEvent | AbHello
+export interface AbProjectsReady {
+  type: 'projects.ready'
+}
+
+/** Any message a WebSocket client can receive from a realtime channel. */
+export type AbSocketMessage = AbEvent | AbHello | AbProjectsReady

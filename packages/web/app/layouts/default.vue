@@ -6,6 +6,7 @@ import { useProjectStore } from '~/stores/project'
 const store = useProjectStore()
 const { projects } = storeToRefs(store)
 const { user, isAdmin, capabilities, signOut } = useAuth()
+useProjectIdentityEvents()
 
 // Load projects here (not only in the boot plugin): the layout renders only for
 // authenticated pages, so by now the session cookie exists and /projects is

@@ -104,6 +104,7 @@ function isPublic(url: string | undefined): boolean {
 // backup, user approval, and (added by CO-169) system settings.
 const ADMIN_ONLY: Array<{ method: string, url: string }> = [
   { method: 'POST', url: '/projects' },
+  { method: 'PATCH', url: '/projects/:id' },
   { method: 'DELETE', url: '/projects/:id' },
   { method: 'POST', url: '/projects/:id/archive' },
   { method: 'POST', url: '/projects/:id/restore' },
@@ -120,7 +121,7 @@ const ADMIN_ONLY: Array<{ method: string, url: string }> = [
   { method: 'POST', url: '/admin/embedding' }
 ]
 
-function isAdminOnly(method: string, url: string | undefined): boolean {
+export function isAdminOnly(method: string, url: string | undefined): boolean {
   return ADMIN_ONLY.some(r => r.method === method && r.url === url)
 }
 

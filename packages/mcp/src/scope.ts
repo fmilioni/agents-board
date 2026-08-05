@@ -24,6 +24,7 @@ export interface McpScope {
 // of the project-touching tools are allowed for any user with a grant.
 const ADMIN_ONLY_TOOLS = new Set([
   'create_project',
+  'update_project',
   'archive_project',
   'restore_project',
   'destroy_project'

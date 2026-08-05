@@ -103,7 +103,7 @@ describe('MCP output schemas', () => {
 
     registerTools(server, {} as Database, null)
 
-    assert.equal(registrations.length, 67)
+    assert.equal(registrations.length, 68)
     assert.deepEqual(
       registrations.map(({ name }) => name).sort(),
       Object.keys(toolOutputSchemas).sort()
@@ -202,6 +202,7 @@ describe('MCP output schemas', () => {
   it('represents null, collection, acknowledgement, conflict, and data errors', () => {
     const cases: Array<[keyof typeof toolOutputSchemas, unknown]> = [
       ['get_project', null],
+      ['update_project', project],
       ['get_active_sprint', []],
       ['set_card_status', { id: 'crd_1', key: 'AB-1', status: 'review' }],
       ['claim_task', {

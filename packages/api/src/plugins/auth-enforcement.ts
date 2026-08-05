@@ -104,6 +104,7 @@ function isPublic(url: string | undefined): boolean {
 // backup, user approval, and (added by CO-169) system settings.
 const ADMIN_ONLY: Array<{ method: string, url: string }> = [
   { method: 'POST', url: '/projects' },
+  { method: 'PATCH', url: '/projects/:id' },
   { method: 'DELETE', url: '/projects/:id' },
   { method: 'POST', url: '/projects/:id/archive' },
   { method: 'POST', url: '/projects/:id/restore' },
@@ -263,7 +264,10 @@ export function registerAuthEnforcement(
     }
 
     if (authz.role === 'admin' || authz.allProjects) return
-    if (url === '/projects' && req.method === 'GET') return
+    if (
+      req.method === 'GET'
+      && (url === '/projects' || url === '/ws/projects')
+    ) return
 
     // Reaching here means approved + role 'user' + not allProjects, so the only
     // remaining check is the explicit grant — no need to re-read user_authz.

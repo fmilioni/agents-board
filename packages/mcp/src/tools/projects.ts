@@ -9,6 +9,7 @@ import {
   listProjects,
   restoreProject,
   setProjectRepo,
+  updateProjectIdentity,
   updateProjectKeyPrefix
 } from '@agents-board/core'
 import type { Database } from '@agents-board/db'
@@ -107,6 +108,28 @@ export function registerProjectTools(
       }
     },
     async input => asJson(projectAck(await createProject(db, input)))
+  )
+
+  server.registerTool(
+    'update_project',
+    {
+      description:
+        'Administratively update a project name, slug, or both. The project id, key prefix, existing card keys, grants, repository, and relationships remain unchanged.',
+      inputSchema: z.object({
+        id: z.string(),
+        name: z.string().min(1).max(120).optional(),
+        slug: z
+          .string()
+          .min(1)
+          .max(60)
+          .regex(/^[a-z0-9][a-z0-9-]*$/)
+          .optional()
+      }).strict().refine(
+        input => input.name !== undefined || input.slug !== undefined,
+        { message: 'At least one of name or slug is required' }
+      )
+    },
+    async input => asJson(await updateProjectIdentity(db, input))
   )
 
   server.registerTool(

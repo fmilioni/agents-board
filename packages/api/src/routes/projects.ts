@@ -7,7 +7,8 @@ import {
   getProjectBySlug,
   listAccessibleProjectIds,
   listProjects,
-  restoreProject
+  restoreProject,
+  updateProjectIdentity
 } from '@agents-board/core'
 import type { Database } from '@agents-board/db'
 
@@ -40,6 +41,19 @@ export function registerProjectRoutes(app: FastifyInstance, db: Database) {
   )
 
   app.post('/projects', async req => createProject(db, req.body as never))
+
+  app.patch<{
+    Params: { id: string }
+    Body: { name?: string, slug?: string }
+  }>('/projects/:id', async (req, reply) => {
+    const project = await updateProjectIdentity(db, {
+      id: req.params.id,
+      name: req.body?.name,
+      slug: req.body?.slug
+    })
+    if (!project) return reply.code(404).send({ error: 'not_found' })
+    return project
+  })
 
   app.post<{ Params: { id: string } }>(
     '/projects/:id/archive',

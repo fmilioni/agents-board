@@ -343,6 +343,7 @@ export const toolOutputSchemas = {
   list_projects: page('projects', project),
   get_project: project.nullable(),
   create_project: projectAck.nullable(),
+  update_project: project.nullable(),
   update_project_key_prefix: projectAck.nullable(),
   archive_project: projectAck.nullable(),
   restore_project: projectAck.nullable(),

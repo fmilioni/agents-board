@@ -43,9 +43,6 @@ useProjectData(currentProjectId, loadDashboard, {
       event.type === 'project.changed'
       || event.type === 'project.deleted'
     ) {
-      // a project was renamed, archived or destroyed — reload the list (the store
-      // falls back to another project if the current one is gone) and the stats.
-      store.loadAndRepoint()
       loadDashboard()
     }
   }

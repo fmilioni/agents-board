@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import type { z } from 'zod'
 
 import type { Database } from '@agents-board/db'
 
@@ -19,8 +20,8 @@ describe('MCP tool security metadata', () => {
 
     registerTools(server, {} as Database, null)
 
-    assert.equal(registrations.length, 67)
-    assert.equal(new Set(registrations.map(({ name }) => name)).size, 67)
+    assert.equal(registrations.length, 68)
+    assert.equal(new Set(registrations.map(({ name }) => name)).size, 68)
     assert.deepEqual(
       registrations.map(({ name }) => name).sort(),
       Object.keys(toolContracts).sort()
@@ -47,6 +48,37 @@ describe('MCP tool security metadata', () => {
     assert.throws(
       () => withToolContract('missing_tool', {}),
       /Missing MCP tool contract: missing_tool/
+    )
+  })
+
+  it('requires update_project to identify a target and change its identity', () => {
+    let inputSchema: z.ZodType | undefined
+    const server = {
+      registerTool(name: string, config: Record<string, unknown>) {
+        if (name === 'update_project') {
+          inputSchema = config.inputSchema as z.ZodType
+        }
+      }
+    } as unknown as McpServer
+
+    registerTools(server, {} as Database, null)
+
+    assert.equal(inputSchema?.safeParse({ id: 'prj_1' }).success, false)
+    assert.equal(
+      inputSchema?.safeParse({ id: 'prj_1', name: 'Renamed' }).success,
+      true
+    )
+    assert.equal(
+      inputSchema?.safeParse({ id: 'prj_1', slug: 'Not Valid' }).success,
+      false
+    )
+    assert.equal(
+      inputSchema?.safeParse({
+        id: 'prj_1',
+        slug: 'renamed',
+        projectId: 'prj_other'
+      }).success,
+      false
     )
   })
 
@@ -92,6 +124,6 @@ describe('MCP tool security metadata', () => {
       'issue_commit_token',
       'issue_upload_token'
     ])
-    assert.equal(readOnly.length + additive.length + 42, 67)
+    assert.equal(readOnly.length + additive.length + 43, 68)
   })
 })

@@ -94,7 +94,7 @@ registerBlockerRoutes(app, db)
 registerDocRoutes(app, db)
 registerIntakeRoutes(app, db)
 registerBackupRoutes(app, db)
-registerEventsWs(app)
+registerEventsWs(app, db)
 
 const shutdown = async () => {
   await app.close()

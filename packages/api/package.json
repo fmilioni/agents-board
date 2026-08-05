@@ -8,6 +8,7 @@
     "dev": "tsx watch --env-file=../../.env src/server.ts",
     "build": "tsup",
     "start": "node --env-file=../../.env dist/server.mjs",
+    "test": "tsx --test test/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"

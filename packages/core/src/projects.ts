@@ -5,17 +5,20 @@ import { createId, type Database, schema } from '@agents-board/db'
 import { REPO_PROVIDERS } from '@agents-board/shared'
 
 import { archivedCondition, type ArchiveFilter } from './archive'
-import { InputError } from './errors'
+import { ConflictError, InputError } from './errors'
 import { notify } from './events'
 import { derivePrefixFromSlug, isValidKeyPrefix } from './keys'
 
+const projectName = z.string().min(1).max(120)
+const projectSlug = z
+  .string()
+  .min(1)
+  .max(60)
+  .regex(/^[a-z0-9][a-z0-9-]*$/, 'lowercase letters, digits and hyphens only')
+
 export const createProjectInput = z.object({
-  name: z.string().min(1).max(120),
-  slug: z
-    .string()
-    .min(1)
-    .max(60)
-    .regex(/^[a-z0-9][a-z0-9-]*$/, 'lowercase letters, digits and hyphens only'),
+  name: projectName,
+  slug: projectSlug,
   description: z.string().max(2000).optional(),
   keyPrefix: z
     .string()
@@ -25,6 +28,19 @@ export const createProjectInput = z.object({
     .optional()
 })
 export type CreateProjectInput = z.infer<typeof createProjectInput>
+
+export const updateProjectIdentityInput = z
+  .object({
+    id: z.string(),
+    name: projectName.optional(),
+    slug: projectSlug.optional()
+  })
+  .refine(input => input.name !== undefined || input.slug !== undefined, {
+    message: 'At least one of name or slug is required'
+  })
+export type UpdateProjectIdentityInput = z.infer<
+  typeof updateProjectIdentityInput
+>
 
 const projectColumns = {
   id: schema.projects.id,
@@ -126,6 +142,38 @@ export async function getProjectById(db: Database, id: string) {
     .where(eq(schema.projects.id, id))
     .limit(1)
   return row ?? null
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  for (let current = error; current instanceof Error; current = current.cause) {
+    if ((current as { code?: unknown }).code === '23505') return true
+  }
+  return false
+}
+
+export async function updateProjectIdentity(
+  db: Database,
+  input: UpdateProjectIdentityInput
+) {
+  const parsed = updateProjectIdentityInput.parse(input)
+  try {
+    const [row] = await db
+      .update(schema.projects)
+      .set({
+        ...(parsed.name !== undefined ? { name: parsed.name } : {}),
+        ...(parsed.slug !== undefined ? { slug: parsed.slug } : {}),
+        updatedAt: sql`now()`
+      })
+      .where(eq(schema.projects.id, parsed.id))
+      .returning()
+    if (row) await notify(db, { type: 'project.changed', projectId: row.id })
+    return row ?? null
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      throw new ConflictError('Project slug is already in use')
+    }
+    throw error
+  }
 }
 
 export async function updateProjectKeyPrefix(

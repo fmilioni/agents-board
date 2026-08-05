@@ -93,6 +93,7 @@ export const toolContracts = {
   list_projects: read('List projects'),
   get_project: read('Get project'),
   create_project: add('Create project'),
+  update_project: mutate('Update project identity'),
   update_project_key_prefix: mutate('Update project key prefix'),
   archive_project: mutate('Archive project'),
   restore_project: mutate('Restore project'),

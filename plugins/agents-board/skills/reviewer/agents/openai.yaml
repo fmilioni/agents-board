@@ -1,0 +1,6 @@
+interface:
+  display_name: "Agents Board Reviewer"
+  short_description: "Read-only card and story changeset review"
+  default_prompt: "Use $reviewer to review this Agents Board changeset without modifying files or board state."
+policy:
+  allow_implicit_invocation: false

@@ -1,13 +1,13 @@
 ---
 name: plan
-description: Use to turn a NEW demand — a feature, a change, a fix — into structured work in claude-organizer (sprints, stories, tasks). Trigger whenever the user describes something new to build before it's broken down, asks to plan/organize work, or asks to CREATE A CARD — card creation ALWAYS runs through this skill, never a direct create_card. This is PLANNING, not execution — do NOT write code here.
+description: Use to turn a NEW demand — a feature, a change, a fix — into structured work in Agents Board (sprints, stories, tasks). Trigger whenever the user describes something new to build before it's broken down, asks to plan/organize work, or asks to CREATE A CARD — card creation ALWAYS runs through this skill, never a direct create_card. This is PLANNING, not execution — do NOT write code here.
 ---
 
 # Planning a demand into cards
 
-Turn a demand into well-formed work through dialogue with the user, then materialize it as **cards in claude-organizer**. The artifact is the cards in the MCP — not a spec file. Execution happens afterwards, card by card, via **`$implement`**.
+Turn a demand into well-formed work through dialogue with the user, then materialize it as **cards in Agents Board**. The artifact is the cards in the MCP — not a spec file. Execution happens afterwards, card by card, via **`$implement`**.
 
-> **Load `$claude-organizer` first.** If it has not been loaded in this conversation, invoke `$claude-organizer` before anything below — it covers what the board is, the project binding, and the comment/doc conventions this skill relies on. If it is already loaded, continue.
+> **Load `$agents-board` first.** If it has not been loaded in this conversation, invoke `$agents-board` before anything below — it covers what the board is, the project binding, and the comment/doc conventions this skill relies on. If it is already loaded, continue.
 
 **Hard rule:** do NOT write code, scaffold, or edit files until the user has approved the plan. Holds for every demand — "too simple to plan" is exactly where a wrong assumption gets baked in. The plan can be short, but you must present it and get approval.
 
@@ -16,7 +16,7 @@ Turn a demand into well-formed work through dialogue with the user, then materia
 Run in order; the never-assume, approval and self-review steps are not optional.
 
 1. **Understand the demand.** If the user describes **several independent systems** (e.g. a chat platform + storage + billing + analytics), stop and tell them to plan **one module at a time** — propose a sequence and start with the first. Don't try to plan all of them at once.
-2. **Explore the context.** Find the project (binding in `.claude-organizer.local.md` or `AGENTS.md`; accept legacy `CLAUDE.local.md` / `CLAUDE.md`; use `list_projects` only if missing). Then read what's relevant: `search_docs` / docs tree for decisions and module knowledge, `search_cards` and the `todo`/`backlog` cards, and project files. Know where this demand fits and what already exists before proposing anything.
+2. **Explore the context.** Find the project (binding in `.agents-board.local.md` or `AGENTS.md`; accept legacy `CLAUDE.local.md` / `CLAUDE.md`; use `list_projects` only if missing). Then read what's relevant: `search_docs` / docs tree for decisions and module knowledge, `search_cards` and the `todo`/`backlog` cards, and project files. Know where this demand fits and what already exists before proposing anything.
    - **Extend, don't stack.** If the demand only **extends a not-yet-started card** (`todo`/`backlog`), update that card (after approval) instead of creating a duplicate. Once a card is `in_progress` it's locked → the demand becomes its own card. Unsure it's the same deliverable? Ask.
 3. **Remove every doubt.** Make it unambiguous *what* is being built — goal, scope, constraints, acceptance criteria. Two things to resolve, both **with the user** (see _Never decide alone_):
    - **Ambiguities** — what the user actually wants.
@@ -51,7 +51,7 @@ Don't let a decision live only in the chat — it's gone next session.
 Write each card so a fresh agent with **zero chat context** can execute it from its contents alone. Describe **behavior and intent, not code** — never write the implementation (naming a real endpoint/table is fine; function bodies aren't), unless it's a real constraint or an already-diagnosed bug. Use the sections that fit:
 
 - **Objective** — what and why.
-- **Acceptance criteria** — how to know it's done (concrete, testable — not "add validation"). Write them as **plain bullets** (`- `), **never** as a task list (`- [ ]`): acceptance criteria are conditions/specs, not manual steps the user ticks off. Checkboxes render as interactive clickable items and are reserved for runbooks / QA test-plans the user actually carries out — see the task-list rule in `$claude-organizer`. The same goes for a **definition-of-done** or any conditions list: plain bullets.
+- **Acceptance criteria** — how to know it's done (concrete, testable — not "add validation"). Write them as **plain bullets** (`- `), **never** as a task list (`- [ ]`): acceptance criteria are conditions/specs, not manual steps the user ticks off. Checkboxes render as interactive clickable items and are reserved for runbooks / QA test-plans the user actually carries out — see the task-list rule in `$agents-board`. The same goes for a **definition-of-done** or any conditions list: plain bullets.
 - **Expected behavior**, **Decisions** settled during clarification, and constraints / out-of-scope / references _as needed_.
 
 The test: *could a fresh session build this from the card alone?* If not, it's underspecified — keep refining.

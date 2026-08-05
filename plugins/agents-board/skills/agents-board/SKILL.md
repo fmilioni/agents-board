@@ -1,11 +1,11 @@
 ---
-name: claude-organizer
-description: Entry point for a project tracked in claude-organizer. Explains the board, routes work to the planning or implementation skill, and records a project binding so future sessions start without listing projects. Use before $plan or $implement when working with a claude-organizer board.
+name: agents-board
+description: Entry point for a project tracked in Agents Board. Explains the board, routes work to the planning or implementation skill, and records a project binding so future sessions start without listing projects. Use before $plan or $implement when working with an Agents Board project.
 ---
 
-# claude-organizer
+# Agents Board
 
-claude-organizer is a Jira-style board exposed through the connected organizer tools: a project's **cards** (tasks), **sprints**, **backlog**, **comments** and **docs**. It is the source of truth for what to work on and why — not your memory. A fresh session starts blank; this is how continuity survives across sessions.
+Agents Board is a Jira-style board exposed through the connected board tools: a project's **cards** (tasks), **sprints**, **backlog**, **comments** and **docs**. It is the source of truth for what to work on and why — not your memory. A fresh session starts blank; this is how continuity survives across sessions.
 
 This skill only tells you **which skill to use** and **how to find the project**. The real workflow lives in the phase skills below — switch to one instead of working from memory.
 
@@ -40,16 +40,16 @@ Only create the inbox item when nothing already covers it. When the check matche
 
 Every tool takes an explicit `projectId`. Get it without scanning:
 
-1. **Check `.claude-organizer.local.md` first, then `AGENTS.md`** for the board binding (`projectId`, `keyPrefix`, `slug`, auth flag). For compatibility, also accept an existing `CLAUDE.local.md` or `CLAUDE.md` binding as legacy input. If a binding exists, use the `projectId` directly — **don't call `list_projects`**.
+1. **Check `.agents-board.local.md` first, then `AGENTS.md`** for the board binding (`projectId`, `keyPrefix`, `slug`, auth flag). For compatibility, also accept an existing `CLAUDE.local.md` or `CLAUDE.md` binding as legacy input. If a binding exists, use the `projectId` directly — **don't call `list_projects`**.
 2. **Only if no binding exists**, call `list_projects`, match the project whose `slug` fits this repo, then **write the binding in the neutral/Codex-first location** (next section). If none matches, ask the user before creating one.
 
-**Multiple hosts:** you may have more than one organizer host connected at once — each has its own tools and projects. Run the lookup on the **right host** (the one whose project `slug` matches this repo) and never mix hosts in a single operation; do not depend on a fixed tool prefix. If unsure which host a repo belongs to, ask.
+**Multiple hosts:** you may have more than one Agents Board host connected at once — each has its own tools and projects. Run the lookup on the **right host** (the one whose project `slug` matches this repo) and never mix hosts in a single operation; do not depend on a fixed tool prefix. If unsure which host a repo belongs to, ask.
 
 ## Record the binding so the next session starts direct
 
 When you had to discover the project (no binding found), persist it so it never needs discovery again. Write a stanza with: **`slug`**, **`keyPrefix`** (cards are `<KEY>-N`), **`projectId`**, and the **auth (diff-capture) flag**.
 
-- **Which file:** a binding safe to share with the repository → `AGENTS.md` (committed). A personal, open-source, or multi-board binding that must stay local → `.claude-organizer.local.md` (gitignored). Treat `CLAUDE.md` and `CLAUDE.local.md` as read-only legacy binding locations; write new bindings to the neutral/Codex-first files. When ambiguous, ask.
+- **Which file:** a binding safe to share with the repository → `AGENTS.md` (committed). A personal, open-source, or multi-board binding that must stay local → `.agents-board.local.md` (gitignored). Treat `CLAUDE.md` and `CLAUDE.local.md` as read-only legacy binding locations; write new bindings to the neutral/Codex-first files. When ambiguous, ask.
 
 ## Auth flag — record ON the first time an attach fails
 

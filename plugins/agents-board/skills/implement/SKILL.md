@@ -1,13 +1,13 @@
 ---
 name: implement
-description: Use to EXECUTE cards that already exist on the board in claude-organizer — a task, a story, several stories, or a whole sprint. Trigger the moment you start, resume, or continue work on specific cards ("work AB-42", "implement this story", "run the sprint", "build it now"). Owns the per-card lifecycle (in_progress → implement → review by a fresh subagent → review status → commit) and multi-card runs in two modes — review each card, or run the whole batch autonomously. Commits one per card (after the user approves the review, or directly in an agreed batch run); leaves each card in `review` until the user approves. NEVER assume — any open decision the card doesn't settle goes to the user first. To break a NEW demand into cards, use $plan instead.
+description: Use to EXECUTE cards that already exist in Agents Board — a task, a story, several stories, or a whole sprint. Trigger the moment you start, resume, or continue work on specific cards ("work AB-42", "implement this story", "run the sprint", "build it now"). Owns the per-card lifecycle (in_progress → implement → review by a fresh subagent → review status → commit) and multi-card runs in two modes — review each card, or run the whole batch autonomously. Commits one per card (after the user approves the review, or directly in an agreed batch run); leaves each card in `review` until the user approves. NEVER assume — any open decision the card doesn't settle goes to the user first. To break a NEW demand into cards, use $plan instead.
 ---
 
 # Implementing a card
 
 Execute a card that already exists on the board — a task, a story, or a sprint's cards. Planning produced the card; here you build it and walk it through its lifecycle while keeping the board honest. To break a new demand into cards, use **`$plan`** — not this skill.
 
-> **Load `$claude-organizer` first.** If it has not been loaded in this conversation, invoke `$claude-organizer` before anything below — it covers what the board is, the project binding, and the comment/doc conventions this skill relies on. If it is already loaded, continue.
+> **Load `$agents-board` first.** If it has not been loaded in this conversation, invoke `$agents-board` before anything below — it covers what the board is, the project binding, and the comment/doc conventions this skill relies on. If it is already loaded, continue.
 
 **Hard rule:** the per-card lifecycle below runs **every card, in order** — trivial or not. Never assume past an open decision; never move a **work** card to `done` without the user's explicit approval. The **one** exception is a **parent story** whose every child is already approved and `done`: closing it is derived bookkeeping, not a work approval — the session that lands the last child closes it automatically (see _Keeping the story in step_). Leaving a card in `review` is the correct resting state, not a defect.
 
@@ -56,7 +56,7 @@ Mirror what the user already does; factor in parallel work / worktrees for scope
    - **A finding goes to the inbox only when it fails one of three tests:** it needs a **decision that isn't yours to take**; it reaches a **module or system this card has no business touching**; or fixing it would **grow the diff past what the user approved**. Nothing else defers.
    - **A gap this card itself opened is never inboxed** — this rule **beats all three tests**. If your change created the state, the same change closes it, **even when the fix lands in another module or outside the card's stated scope**, and the card comment says why it went in. A new state with nothing rendering or consuming it is half-done work, not a backlog item.
    - **"Outside the card's declared scope" is not, on its own, a reason to defer** — it's a reason to explain the detour in the comment.
-   - When you do inbox one: run the dedup check from `$claude-organizer` first (search the board + pending inbox) and reference an existing card/item instead of duplicating, then flag it in the final overview — never drop it silently.
+   - When you do inbox one: run the dedup check from `$agents-board` first (search the board + pending inbox) and reference an existing card/item instead of duplicating, then flag it in the final overview — never drop it silently.
 7. **Hand off to `review`.** `set_card_status(id, "review")` and post **one** test-plan comment (what to open, do, expect; what you already checked). **Keep the claim** — the card's work isn't locked in until it's committed, so it's released at step 8, not here. Card has a parent → re-derive the story (see _Keeping the story in step_).
 8. **Commit, then release — timing depends on the run mode.** Committing a story's **last** card is what makes its full changeset reviewable: run the **story review right there**, before the PR / the approval request (see _The story review_). Whenever this lands a child in `done`, re-derive the story (see _Keeping the story in step_) — and if it was the story's last open child, **you own the close**.
    - **Review-each-card mode (and any single card):** **do not commit until the user approves the review.** Attach the **working-tree** diff (`attach-worktree-diff <AB-N>`) so the card in `review` shows the pending change; wait for the user's go-ahead, then commit **one per card** (message in English with the key, e.g. `feat(tags): … (AB-4)`) + `attach-commit <sha>` (replaces the preview), **release the claim** (`release_task(<key>, <sessionToken>)`), and move the card to `done` (or open a PR — see _End of run_).
@@ -83,7 +83,7 @@ Mirror what the user already does; factor in parallel work / worktrees for scope
 The story review's input is the **complete changeset**, and that exists the moment the story's **last card is committed** — not when the story closes. Run it there:
 
 - **Run the pass** — **one story-level reviewer pass** over the **whole story changeset** (`git diff <base>...HEAD`, every child committed) for the cross-cutting issues a single task can't see (one concept implemented two ways across tasks, duplication, coherence as a PR). The read-only subagent using `$reviewer` reads code + git from the context you curate, so it doesn't matter which session wrote each task.
-- **Then dispose of the findings** — the review-gate rules (step 6) apply here too, and a story is where a state-with-nothing-consuming-it is likeliest to appear: **fix by default** (a new commit on the story, attached like any other), and a gap the story itself opened is fixed, never offered. Only for what fails one of the three tests, offer **per finding**: **send it to the inbox** (run the `$claude-organizer` dedup-check first — search the board + pending inbox; reference an existing card/item instead of duplicating) or **create a follow-up card**.
+- **Then dispose of the findings** — the review-gate rules (step 6) apply here too, and a story is where a state-with-nothing-consuming-it is likeliest to appear: **fix by default** (a new commit on the story, attached like any other), and a gap the story itself opened is fixed, never offered. Only for what fails one of the three tests, offer **per finding**: **send it to the inbox** (run the `$agents-board` dedup-check first — search the board + pending inbox; reference an existing card/item instead of duplicating) or **create a follow-up card**.
 - **Single-session run (the common case): only then open the PR / ask for approval**, presenting what the review found together with the request — the user decides the merge knowing it. Never the reverse: an approval asked before the pass makes the merge decision blind to the only findings that see the story whole.
 - **Multi-session story:** when the children ran in other sessions/machines, the session that lands the last child is the **first** that can assemble the whole changeset — there the pass at the close is the only possible moment. Before reviewing, ensure every child's commit is present and reachable from `HEAD` (`git fetch`, then pull/merge the shared run branch). If the commits can't be assembled locally, you **can't** run a faithful story review — surface that to the user and **don't auto-close**.
 
@@ -100,7 +100,7 @@ Spawn a **fresh read-only subagent** and explicitly instruct it to load **`$revi
 
 - **The card** — description and **acceptance criteria**, the **scope** (per-task / story / standalone), and the **relevant comments** (the decisions/constraints that bear on the review — you filter junk from signal). For a story, inline the parent + all children.
 - **The changeset spec** — how to see exactly the in-scope code (it runs git itself): per-task → that task's working-tree diff (`git diff`) or commit (`git show <sha>`); story → `git diff <base>...HEAD`.
-- **Relevant docs and image refs** — inline the pertinent docs; for images pass the organizer host identity when needed plus each `attachment://<id>` reference. Do not assume a fixed MCP tool prefix.
+- **Relevant docs and image refs** — inline the pertinent docs; for images pass the Agents Board host identity when needed plus each `attachment://<id>` reference. Do not assume a fixed MCP tool prefix.
 
 It returns a structured report (acceptance criteria met/partial/not-met, typed findings by severity, a verdict). **Dispose of the findings by the review-gate rules** (step 6): fix by default, inbox only what fails one of the three tests, never a gap this card itself opened. Surface a real trade-off to the user; nothing is dropped on severity.
 
@@ -116,7 +116,7 @@ After the cards are built and sitting in `review`:
 
 ## Diff capture
 
-Two scripts ship **inside this skill** — call them by absolute path under this skill's directory (the `pnpm` shortcuts exist **only** in the claude-organizer dev repo). Use the `.mjs` on any host with Node 18+; a `.py` twin sits next to each for hosts without Node. Both POST the diff to the API outside your context — **never read or paste the diff**.
+Two scripts ship **inside this skill** — call them by absolute path under this skill's directory (the `pnpm` shortcuts exist **only** in the Agents Board development repository). Use the `.mjs` on any host with Node 18+; a `.py` twin sits next to each for hosts without Node. Both POST the diff to the API outside your context — **never read or paste the diff**.
 
 - **`attach-worktree-diff.mjs <AB-N>`** — the **review preview before any commit**: attaches the working-tree diff so the user sees the pending change while the card sits in `review`. The card key is **required** (there's no commit to read it from). Used in the one-card-at-a-time path, where the commit waits for approval.
 - **`attach-commit.mjs <sha> [AB-N]`** — after a commit lands: attaches the clean per-card commit diff (replaces any worktree preview). The commit **`<sha>` is required**; the card key is **optional** — the script parses it from the commit message (`… (AB-N)`), so pass `[AB-N]` only if the message doesn't carry it. Used the moment you commit — directly in a batch run, or after approval in the one-card path.
@@ -129,7 +129,7 @@ node "<this skill's directory>/scripts/attach-commit.mjs" <sha>
 AB_COMMIT_TOKEN=<token> node "<this skill's directory>/scripts/attach-commit.mjs" <sha>
 ```
 
-**Auth flag** — read it from the resolved project binding (`.claude-organizer.local.md` or `AGENTS.md`, with legacy `CLAUDE.local.md` / `CLAUDE.md` accepted). Auth **on** → mint `issue_commit_token(<AB-N>)` and pass `AB_COMMIT_TOKEN=<token>` (one per attach). Auth **off / no flag** → run tokenless. If an attach returns **401**, auth is actually on: record the flag in the same canonical binding file, then retry with a token.
+**Auth flag** — read it from the resolved project binding (`.agents-board.local.md` or `AGENTS.md`, with legacy `CLAUDE.local.md` / `CLAUDE.md` accepted). Auth **on** → mint `issue_commit_token(<AB-N>)` and pass `AB_COMMIT_TOKEN=<token>` (one per attach). Auth **off / no flag** → run tokenless. If an attach returns **401**, auth is actually on: record the flag in the same canonical binding file, then retry with a token.
 
 ## Attaching an image
 

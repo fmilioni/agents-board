@@ -1,22 +1,22 @@
-# Claude Organizer
+# Agents Board
 
 "Jira for Codex": project management exposed over MCP. Codex uses the system to organize its own development (auto-inception). **International** product.
 
 ## Skills
 
-Three user-facing skills drive the work (packaged in `plugins/claude-organizer`):
+Three user-facing skills drive the work (packaged in `plugins/agents-board`):
 
-- **`claude-organizer`** — the entry point: what the board is, which skill to use, and how to bind the repo to its project (record `projectId` + the auth flag in `.claude-organizer.local.md`).
+- **`agents-board`** — the entry point: what the board is, which skill to use, and how to bind the repo to its project (record `projectId` + the auth flag in `.agents-board.local.md`).
 - **`plan`** — turn a new demand into sprints/stories/tasks (auto-triggers when you describe something to build). All card creation goes through here.
 - **`implement`** — execute existing cards through a mandatory per-card lifecycle (in_progress → implement → review → commit), single-card or as a multi-card run (story/sprint) in two modes — review each card, or run the whole batch autonomously. It fires a fresh-subagent review (the `reviewer` agent) before each card closes, and a story-level review when a story's last child finishes. Auto-triggers when you start building a specific card.
 
 The review runs in a fresh read-only subagent dispatched by `implement`. That subagent explicitly loads the internal **`reviewer`** skill, which is not implicitly invoked or exposed as a normal workflow entry point. The "never assume — resolve open decisions" doctrine is carried **inline** in `plan` and `implement`, so each user-facing skill is self-contained.
 
-Let the skills drive. **What** to do (active sprint, cards, backlog, comments, docs) is the source of truth and lives **in the MCP**, not here — query it through the Claude Organizer MCP tools. Don't duplicate state into this file.
+Let the skills drive. **What** to do (active sprint, cards, backlog, comments, docs) is the source of truth and lives **in the MCP**, not here — query it through the Agents Board MCP tools. Don't duplicate state into this file.
 
 ### Bind this repo to your board (local, not committed)
 
-This is an **open-source** repo — every clone tracks its own work on its **own** Claude Organizer board, so the project↔MCP binding is deliberately **not** committed here. Put yours in a gitignored `.claude-organizer.local.md` at the repo root. Codex must read it when it exists. For example:
+This is an **open-source** repo — every clone tracks its own work on its **own Agents Board instance**, so the project↔MCP binding is deliberately **not** committed here. Put yours in a gitignored `.agents-board.local.md` at the repo root. Codex must read it when it exists. For example:
 
 ```md
 This project in the MCP:
@@ -40,8 +40,8 @@ Architecture, data model, decisions (ADRs), code/UI patterns and per-module deta
 - **Code comments**: the default is **none** — the code, the types, the names and the test names carry the intent. The full bar (the closed list of what justifies one, what never does, and why a test body takes none) lives in the `implement` skill's step 4 and in the `reviewer` agent, which apply it identically — don't restate it here.
 - **Commits**: one commit per card/task, **only after the user confirms** it works; the message is written **in English** and references the key (e.g. `feat(tags): … (<KEY>-4)`). After committing, attach its diff to the card with `pnpm attach-commit <sha>` (captured outside the AI context — never read or paste the diff).
 - **PRs**: written **in English** (title *and* body, same as commits — only tasks/comments/docs follow the user's language). Write the **title as a conventional commit** (`feat(scope): … (<KEY>-N)`); PRs are **squash-merged**, so the title becomes the commit message. The body summarizes the work — **no "Generated with Codex" footer**.
-  - **Merging is the user's call.** By default Codex opens the PR and **stops**; the user merges. Any deployment-specific merge governance (branch protection, the exact merge command, who may override it) lives in `.claude-organizer.local.md`.
-- **Auth (diff capture)**: whether auth is ON or OFF depends on your deployment — declare it in `.claude-organizer.local.md` (see above). When auth is **ON**, the `attach-commit` / `attach-worktree-diff` scripts need a card-scoped token: mint `issue_commit_token(<KEY-N>)` and pass it as `AB_COMMIT_TOKEN=<token> pnpm attach-… <arg>` (one token per attach). When **OFF**, run the `pnpm attach-…` scripts without a token.
+  - **Merging is the user's call.** By default Codex opens the PR and **stops**; the user merges. Any deployment-specific merge governance (branch protection, the exact merge command, who may override it) lives in `.agents-board.local.md`.
+- **Auth (diff capture)**: whether auth is ON or OFF depends on your deployment — declare it in `.agents-board.local.md` (see above). When auth is **ON**, the `attach-commit` / `attach-worktree-diff` scripts need a card-scoped token: mint `issue_commit_token(<KEY-N>)` and pass it as `AB_COMMIT_TOKEN=<token> pnpm attach-… <arg>` (one token per attach). When **OFF**, run the `pnpm attach-…` scripts without a token.
   - **Run from the repo root.** `attach-commit` / `attach-worktree-diff` are **root** `package.json` scripts. If the shell's cwd drifted into a package (e.g. a prior `cd packages/core`), `pnpm attach-…` fails with *"Command not found"* (pnpm looks in that package) and the bundled `node …/scripts/*.mjs` path breaks too (it's relative to root). Return to the repo root first, or prefix the command with the absolute root path — then run `AB_COMMIT_TOKEN=<token> pnpm attach-commit <sha>` / `pnpm attach-worktree-diff <KEY-N>`.
 - **Versioning**: every version (each `package.json`, the plugin manifests and the MCP server) stays in sync — to set it, run `pnpm bump <version>` (the unified bump script); never edit version fields by hand.
 - **Nuxt / Nuxt UI work**: any time you touch a Nuxt UI item (a component, composable, icon, theming) or Nuxt itself, **invoke the `nuxt-ui` skill first** — it's the entry point for how we build UIs here. Back it with the MCPs: `nuxt-ui-remote` (Nuxt UI components/composables/icons/examples) and `nuxt-remote` (Nuxt framework docs/modules). Always confirm a component's props/slots through the MCP before using a new one.
@@ -75,4 +75,4 @@ Always run `pnpm typecheck` **and** `pnpm lint` from the **repo root** (the `-r`
 
 ## After restarting Codex
 
-The `claude-organizer` MCP loads automatically from the **bundled plugin** and points at local Docker (`http://127.0.0.1:4402/mcp`) — that's the primary board. For a remote host, register an additional named server with `codex mcp add <name> --url <url>` and set `AB_API_URL` for the diff/image helper scripts. Postgres must be UP. If a new MCP tool doesn't show up, start a new Codex task after rebuilding/restarting the relevant process.
+The `agents-board` MCP loads automatically from the **bundled plugin** and points at local Docker (`http://127.0.0.1:4402/mcp`) — that's the primary board. For a remote host, register an additional named server with `codex mcp add <name> --url <url>` and set `AB_API_URL` for the diff/image helper scripts. Postgres must be UP. If a new MCP tool doesn't show up, start a new Codex task after rebuilding/restarting the relevant process.

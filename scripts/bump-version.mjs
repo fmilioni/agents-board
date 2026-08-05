@@ -3,7 +3,9 @@
 // so nothing drifts. Usage: pnpm bump <version>   (e.g. pnpm bump 0.3.0)
 //
 // Touches only JSON: every workspace package.json (root + packages/*) and the
-// plugin manifests (plugin.json + marketplace.json). The MCP server version is
+// plugin manifests (Claude + Codex plugin.json, plus the Claude marketplace).
+// The Codex marketplace points at the plugin manifest and carries no version.
+// The MCP server version is
 // NOT duplicated here — it derives from its own package.json at build time
 // (see packages/mcp/src/create-server.ts), so bumping the JSON covers it too.
 //
@@ -57,7 +59,8 @@ for (const name of readdirSync(join(root, 'packages'))) {
 }
 
 // Plugin manifests.
-patchJson('plugins/claude-organizer/.claude-plugin/plugin.json', setVersion)
+patchJson('plugins/agents-board/.claude-plugin/plugin.json', setVersion)
+patchJson('plugins/agents-board/.codex-plugin/plugin.json', setVersion)
 patchJson('.claude-plugin/marketplace.json', (data) => {
   for (const plugin of data.plugins ?? []) plugin.version = version
 })

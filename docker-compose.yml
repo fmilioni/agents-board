@@ -1,3 +1,5 @@
+name: agents-board
+
 # Shared build for the app services: one image, different commands.
 # `docker compose up` (after `cp .env.example .env`) brings up the whole stack;
 # `pnpm db:up` still targets just postgres.
@@ -6,13 +8,13 @@ x-app: &app
     context: .
     args:
       NUXT_PUBLIC_API_URL: ${NUXT_PUBLIC_API_URL:-http://127.0.0.1:4400}
-  image: claude-organizer-app
+  image: agents-board-app
   restart: unless-stopped
 
 # DATABASE_URL points at the in-network postgres host (port 5432), not the
 # host-published 5544. The host .env keeps localhost:5544 for non-Docker dev.
 x-db-env: &db-env
-  DATABASE_URL: postgres://${POSTGRES_USER:-organizer}:${POSTGRES_PASSWORD:-organizer}@postgres:5432/${POSTGRES_DB:-organizer}
+  DATABASE_URL: postgres://${POSTGRES_USER:-organizer}:${POSTGRES_PASSWORD:-organizer}@postgres:5432/${AB_POSTGRES_DB:-agents_board}
 
 # Stable cache dir for the embedding model weights (Transformers.js ignores
 # HF_HOME, so the code reads EMBEDDING_CACHE_DIR). Lives ONLY on the embedding
@@ -30,21 +32,35 @@ services:
     # pgvector overlay on postgres:16 — adds the `vector` extension for semantic
     # search (CO-241). The prod overlay inherits this image (it only resets ports).
     image: pgvector/pgvector:pg16
-    container_name: claude-organizer-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-organizer}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-organizer}
-      POSTGRES_DB: ${POSTGRES_DB:-organizer}
+      POSTGRES_DB: ${AB_POSTGRES_DB:-agents_board}
     ports:
       - "${POSTGRES_PORT:-5544}:5432"
     volumes:
-      - ./docker/data/postgres:/var/lib/postgresql/data
+      - ${AB_POSTGRES_DATA_PATH:-./docker/data/postgres}:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-organizer} -d ${POSTGRES_DB:-organizer}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-organizer} -d postgres"]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  database-rename:
+    image: pgvector/pgvector:pg16
+    restart: "no"
+    entrypoint: ["/bin/sh", "/usr/local/bin/migrate-default-database.sh"]
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-organizer}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-organizer}
+      AB_POSTGRES_DB: ${AB_POSTGRES_DB:-agents_board}
+    volumes:
+      - ./scripts/migrate-default-database.sh:/usr/local/bin/migrate-default-database.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   # One-shot: apply migrations once Postgres is healthy, before api/mcp start.
   migrate:
@@ -54,8 +70,8 @@ services:
     environment:
       <<: *db-env
     depends_on:
-      postgres:
-        condition: service_healthy
+      database-rename:
+        condition: service_completed_successfully
 
   # The only process that loads the embedding model. api/mcp call it over HTTP;
   # if it's down/still warming, they fall back to lexical search (graceful).

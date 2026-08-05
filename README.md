@@ -78,7 +78,7 @@ docker compose up -d --build
 ```bash
 POSTGRES_USER=organizer
 POSTGRES_PASSWORD=organizer
-POSTGRES_DB=organizer
+AB_POSTGRES_DB=agents_board
 POSTGRES_PORT=5544                       # host port (in-container is 5432)
 API_PORT=4400
 NUXT_PUBLIC_API_URL=http://127.0.0.1:4400
@@ -86,7 +86,51 @@ NUXT_PUBLIC_API_URL=http://127.0.0.1:4400
 # MCP_PUBLIC_URL=http://127.0.0.1:4402    # public URL clients reach the MCP at
 ```
 
-Migrations run automatically before the API and MCP start, and a one-shot `backfill` then (re)builds the semantic-search vectors for any content missing them — so upgrading is just `docker compose up -d --build`, no manual step. The embedding model loads in its own `embedding` service; the API and MCP call it over HTTP and fall back to lexical search if it's down. Postgres data persists under `./docker/data/postgres`. Out of the box the board is **open** (no login) — see [Authentication](#authentication) to turn sign-in on.
+Migrations run automatically before the API and MCP start, and a one-shot `backfill` then (re)builds the semantic-search vectors for any content missing them. The embedding model loads in its own `embedding` service; the API and MCP call it over HTTP and fall back to lexical search if it's down. Postgres data persists under `./docker/data/postgres`. Out of the box the board is **open** (no login) — see [Authentication](#authentication) to turn sign-in on.
+
+#### Upgrade from Claude Organizer
+
+The Compose project, images, containers, and default database now use the Agents Board identity. Stop the old Compose project before the first upgrade so its containers release the local ports, then start the new stack:
+
+```bash
+docker compose -p claude-organizer down
+docker compose up -d --build
+```
+
+The `database-rename` one-shot service detects the former default `organizer` database and renames it to `agents_board` before application migrations run. The operation is idempotent and preserves the existing Postgres data directory. Existing local-development environments should also replace `POSTGRES_DB=organizer` with `AB_POSTGRES_DB=agents_board` and update `DATABASE_URL` to end in `/agents_board`. Custom database names are never renamed automatically; set `AB_POSTGRES_DB` and `DATABASE_URL` explicitly for those deployments.
+
+Take a database backup before upgrading. To roll this identity-only release back, stop the new stack, start only its Postgres service, rename the database back, and then start the previous release with its former environment values:
+
+```bash
+docker compose down
+docker compose up -d postgres
+docker compose exec -T postgres psql -U organizer -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'agents_board' AND pid <> pg_backend_pid()"
+docker compose exec -T postgres psql -U organizer -d postgres -c "ALTER DATABASE agents_board RENAME TO organizer"
+docker compose down
+git checkout <previous-release>
+docker compose -p claude-organizer up -d --build
+```
+
+Restore the backup instead when rolling back across any release that also contains incompatible schema migrations.
+
+Production deployments must keep the production overlay in every lifecycle command. Upgrade with:
+
+```bash
+docker compose -p claude-organizer -f docker-compose.yml -f docker-compose.prod.yml down
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+For a production rollback, use the same overlay while renaming the database and when starting the previous release:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d postgres
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres psql -U organizer -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'agents_board' AND pid <> pg_backend_pid()"
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres psql -U organizer -d postgres -c "ALTER DATABASE agents_board RENAME TO organizer"
+docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+git checkout <previous-release>
+docker compose -p claude-organizer -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
 
 ### 2. Install the plugin
 

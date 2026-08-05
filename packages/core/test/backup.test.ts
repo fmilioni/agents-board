@@ -4,8 +4,8 @@ import { getTableName, is } from 'drizzle-orm'
 import { PgTable } from 'drizzle-orm/pg-core'
 import { describe, expect, it } from 'vitest'
 
-import { schema } from '@claude-organizer/db'
-import { BACKUP_FORMAT_VERSION } from '@claude-organizer/shared'
+import { schema } from '@agents-board/db'
+import { BACKUP_FORMAT_VERSION } from '@agents-board/shared'
 
 import {
   addBlocker,

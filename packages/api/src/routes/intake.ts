@@ -10,9 +10,9 @@ import {
   markIntakePlanned,
   restoreIntakeItem,
   updateIntakeItem
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
-import { INTAKE_STATUSES } from '@claude-organizer/shared'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
+import { INTAKE_STATUSES } from '@agents-board/shared'
 
 const listIntakeQuery = z.object({
   status: z.enum(INTAKE_STATUSES).optional()

@@ -1,6 +1,6 @@
-import type { DocKind, DocSummary } from '@claude-organizer/shared'
+import type { DocKind, DocSummary } from '@agents-board/shared'
 
-export type { Doc, DocKind, DocSummary } from '@claude-organizer/shared'
+export type { Doc, DocKind, DocSummary } from '@agents-board/shared'
 
 /** Front-only tree node built from a flat list of docs. */
 export interface DocNode extends DocSummary {

@@ -8,8 +8,8 @@ import {
   listAccessibleProjectIds,
   listProjects,
   restoreProject
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 export function registerProjectRoutes(app: FastifyInstance, db: Database) {
   app.get<{ Querystring: { includeArchived?: string, archivedOnly?: string } }>(

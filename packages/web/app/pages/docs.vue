@@ -19,7 +19,7 @@ const selectedId = ref<string | null>(null)
 const current = ref<Doc | null>(null)
 
 // Resizable tree column
-const treeWidth = useCookie<number>('organizer.docsTreeWidth', {
+const treeWidth = useCookie<number>('agents-board.docsTreeWidth', {
   default: () => 288,
   sameSite: 'lax',
   maxAge: 60 * 60 * 24 * 365

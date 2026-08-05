@@ -1,7 +1,7 @@
 import { fromNodeHeaders } from 'better-auth/node'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 
-import type { Auth } from '@claude-organizer/auth'
+import type { Auth } from '@agents-board/auth'
 import {
   getProjectBySlug,
   getSystemSettings,
@@ -14,9 +14,9 @@ import {
   verifyAttachmentToken,
   verifyCommitToken,
   verifyUploadToken
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
-import type { UserRole, UserStatus } from '@claude-organizer/shared'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
+import type { UserRole, UserStatus } from '@agents-board/shared'
 
 export interface AuthUser {
   userId: string
@@ -54,13 +54,13 @@ const COMMIT_TOKEN_ROUTES = new Set([
   'DELETE /cards/:key/commits/working'
 ])
 
-// A valid `X-CO-Commit-Token` matching the route's card key stands in for a
+// A valid `X-AB-Commit-Token` matching the route's card key stands in for a
 // session, but ONLY on the routes above and ONLY for that card — it grants no
 // broader identity (authUser stays null).
 function acceptsCommitToken(req: FastifyRequest): boolean {
   const url = req.routeOptions?.url
   if (!url || !COMMIT_TOKEN_ROUTES.has(`${req.method} ${url}`)) return false
-  const token = req.headers['x-co-commit-token']
+  const token = req.headers['x-ab-commit-token']
   const key = (req.params as Record<string, string>).key
   if (typeof token !== 'string' || !key) return false
   const secret = resolveCommitTokenSecret()
@@ -68,13 +68,13 @@ function acceptsCommitToken(req: FastifyRequest): boolean {
 }
 
 // The agent's attach-image script has no browser session either. A valid
-// `X-CO-Upload-Token` stands in for one on the upload route alone, and only for
+// `X-AB-Upload-Token` stands in for one on the upload route alone, and only for
 // the project it was minted for (authUser stays null, as above).
 function acceptsUploadToken(req: FastifyRequest): boolean {
   if (req.routeOptions?.url !== '/attachments' || req.method !== 'POST') {
     return false
   }
-  const token = req.headers['x-co-upload-token']
+  const token = req.headers['x-ab-upload-token']
   const projectId = (req.query as Record<string, string | undefined>).projectId
   if (typeof token !== 'string' || !projectId) return false
   const secret = resolveCommitTokenSecret()

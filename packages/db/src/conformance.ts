@@ -1,6 +1,6 @@
 /**
  * Compile-time conformance between the Drizzle schema and the API wire types in
- * @claude-organizer/shared. If a column is added, renamed or retyped, one of the
+ * @agents-board/shared. If a column is added, renamed or retyped, one of the
  * asserts below stops compiling and `pnpm typecheck` fails until the matching
  * field in shared is updated. Pure types — this module emits nothing at runtime.
  */
@@ -31,7 +31,7 @@ import type {
   UserProjectAccessRow,
   UserRole,
   UserStatus
-} from '@claude-organizer/shared'
+} from '@agents-board/shared'
 
 import {
   attachmentOwnerTypeEnum,

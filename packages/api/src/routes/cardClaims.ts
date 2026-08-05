@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 
-import { claimCard, releaseCard, takeOverCard } from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+import { claimCard, releaseCard, takeOverCard } from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 export function registerCardClaimRoutes(app: FastifyInstance, db: Database) {
   app.post<{ Params: { id: string } }>('/cards/:id/claim', async req =>

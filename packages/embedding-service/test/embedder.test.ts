@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import type { EmbeddingConfig } from '@claude-organizer/shared'
+import type { EmbeddingConfig } from '@agents-board/shared'
 
 import { createEmbedder, isTransientDbError, type PipelineLoader, warmUp } from '../src/embedder'
 

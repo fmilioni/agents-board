@@ -1,7 +1,7 @@
 import { relations } from 'drizzle-orm'
 import { index, integer, pgTable, primaryKey, text } from 'drizzle-orm/pg-core'
 
-import { DEFAULT_EMBEDDING_DIM } from '@claude-organizer/shared'
+import { DEFAULT_EMBEDDING_DIM } from '@agents-board/shared'
 
 import { cards } from './cards'
 import { vector } from './columns'

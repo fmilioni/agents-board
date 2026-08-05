@@ -1,13 +1,13 @@
 import { and, eq, inArray, sql } from 'drizzle-orm'
 
-import { type Database, schema } from '@claude-organizer/db'
-import { SYSTEM_SETTINGS_ID } from '@claude-organizer/db/schema'
+import { type Database, schema } from '@agents-board/db'
+import { SYSTEM_SETTINGS_ID } from '@agents-board/db/schema'
 import type {
   SystemSettingsRow,
   UserRole,
   UserStatus
-} from '@claude-organizer/shared'
-import { EMBEDDING_DTYPES, EMBEDDING_MODELS } from '@claude-organizer/shared'
+} from '@agents-board/shared'
+import { EMBEDDING_DTYPES, EMBEDDING_MODELS } from '@agents-board/shared'
 
 import { ConflictError, InputError } from './errors'
 

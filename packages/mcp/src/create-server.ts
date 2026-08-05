@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z, type ZodRawShape } from 'zod'
 
-import type { Database } from '@claude-organizer/db'
+import type { Database } from '@agents-board/db'
 
 import packageJson from '../package.json'
 import { registerResources } from './resources/index'
@@ -36,7 +36,7 @@ function strictInputSchema(config: unknown): unknown {
 // handler — a new tool can't forget to scope, and an unmapped one fails closed.
 export function createMcpServer(db: Database, scope: McpScope | null = null) {
   const server = new McpServer({
-    name: 'claude-organizer',
+    name: 'agents-board',
     version: packageJson.version
   })
 

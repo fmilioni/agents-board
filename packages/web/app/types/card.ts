@@ -1,4 +1,4 @@
-import type { Card, CardStatus } from '@claude-organizer/shared'
+import type { Card, CardStatus } from '@agents-board/shared'
 
 export type {
   Card,
@@ -6,7 +6,7 @@ export type {
   CardParent,
   CardStatus,
   CardSubtask
-} from '@claude-organizer/shared'
+} from '@agents-board/shared'
 
 /** A card from `/cards?q=`, plus the matched comment snippet when the hit came from a comment. */
 export interface CardSearchResult extends Card {

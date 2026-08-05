@@ -19,11 +19,11 @@ const ctx = useTestDb()
 
 describe('card key generation', () => {
   it('assigns sequential keys per project prefix', async () => {
-    const project = await freshProject(ctx.db, 'CO')
+    const project = await freshProject(ctx.db, 'AB')
     const a = await createCard(ctx.db, { projectId: project.id, title: 'first' })
     const b = await createCard(ctx.db, { projectId: project.id, title: 'second' })
-    expect(a.key).toBe('CO-1')
-    expect(b.key).toBe('CO-2')
+    expect(a.key).toBe('AB-1')
+    expect(b.key).toBe('AB-2')
   })
 
   it('is atomic under concurrency: no duplicates, contiguous sequence', async () => {

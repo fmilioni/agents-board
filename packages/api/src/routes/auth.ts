@@ -6,13 +6,13 @@ import type {
 } from 'fastify'
 import { z } from 'zod'
 
-import type { Auth } from '@claude-organizer/auth'
+import type { Auth } from '@agents-board/auth'
 import {
   hasAnyUser,
   isEmailPasswordEnabled,
   isGithubConfigured,
   oAuthDiscoveryMetadata
-} from '@claude-organizer/auth'
+} from '@agents-board/auth'
 import {
   getSystemSettings,
   getUserAuthz,
@@ -24,10 +24,10 @@ import {
   setIncludeAttachmentsInBackup,
   setKeepAttachmentsOnArchive,
   setKeepDiffsOnArchive
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
-import type { AuthCapabilities, SessionUser } from '@claude-organizer/shared'
-import { resolveEmbeddingConfig } from '@claude-organizer/shared'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
+import type { AuthCapabilities, SessionUser } from '@agents-board/shared'
+import { resolveEmbeddingConfig } from '@agents-board/shared'
 
 // Bridge Fastify ↔ web Request/Response (instead of toNodeHandler + hijack) so
 // the @fastify/cors hook still applies to better-auth's responses — a hijacked

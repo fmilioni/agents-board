@@ -12,7 +12,7 @@ swept after the grace window).
 Standard library only; a Node twin lives at scripts/attach-image.mjs for
 machines without Python. Keep the two in sync.
 
-Config: CO_API_URL (default http://127.0.0.1:4400), CO_UPLOAD_TOKEN (only with
+Config: AB_API_URL (default http://127.0.0.1:4400), AB_UPLOAD_TOKEN (only with
 auth on — mint it with the MCP's issue_upload_token).
 """
 
@@ -33,10 +33,10 @@ for _stream in (sys.stdout, sys.stderr):
     except (AttributeError, ValueError):
         pass
 
-API_URL = os.environ.get("CO_API_URL", "http://127.0.0.1:4400").rstrip("/")
-UPLOAD_TOKEN = os.environ.get("CO_UPLOAD_TOKEN")
+API_URL = os.environ.get("AB_API_URL", "http://127.0.0.1:4400").rstrip("/")
+UPLOAD_TOKEN = os.environ.get("AB_UPLOAD_TOKEN")
 
-# Mirrors ATTACHMENT_MIME_TYPES in @claude-organizer/shared.
+# Mirrors ATTACHMENT_MIME_TYPES in @agents-board/shared.
 EXT_MIME = {
     "png": "image/png",
     "jpg": "image/jpeg",
@@ -99,7 +99,7 @@ def main():
     boundary, body = multipart_body(path, mime)
     headers = {"Content-Type": f"multipart/form-data; boundary={boundary}"}
     if UPLOAD_TOKEN:
-        headers["X-CO-Upload-Token"] = UPLOAD_TOKEN
+        headers["X-AB-Upload-Token"] = UPLOAD_TOKEN
 
     query = urllib.parse.urlencode({"projectId": project_id})
     req = urllib.request.Request(
@@ -113,7 +113,7 @@ def main():
             fail(
                 "API responded 401: auth is on and no valid upload token was sent. "
                 "Mint one with issue_upload_token(<projectId>) and re-run with "
-                "CO_UPLOAD_TOKEN=<token>."
+                "AB_UPLOAD_TOKEN=<token>."
             )
         fail(f"API responded {err.code}: {err.read().decode('utf-8', 'replace')}")
     except urllib.error.URLError as err:

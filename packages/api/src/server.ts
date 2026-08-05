@@ -3,12 +3,12 @@ import multipart from '@fastify/multipart'
 import websocket from '@fastify/websocket'
 import Fastify from 'fastify'
 
-import { createAuth, getTrustedOrigins } from '@claude-organizer/auth'
+import { createAuth, getTrustedOrigins } from '@agents-board/auth'
 import {
   purgeExpiredOauthTokens,
   sweepOrphanAttachments
-} from '@claude-organizer/core'
-import { createDb } from '@claude-organizer/db'
+} from '@agents-board/core'
+import { createDb } from '@agents-board/db'
 
 import { registerAuthEnforcement } from './plugins/auth-enforcement'
 import errorHandlerPlugin from './plugins/error-handler'

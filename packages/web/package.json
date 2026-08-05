@@ -1,5 +1,5 @@
 {
-  "name": "@claude-organizer/web",
+  "name": "@agents-board/web",
   "version": "0.35.1",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@claude-organizer/shared": "workspace:*",
+    "@agents-board/shared": "workspace:*",
     "@nuxt/ui": "4.8.2",
     "@pinia/nuxt": "0.11.3",
     "@tiptap/extension-image": "3.26.1",

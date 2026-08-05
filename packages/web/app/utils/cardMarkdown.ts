@@ -1,7 +1,7 @@
 import { Marked, type Tokens } from 'marked'
 
 // One Marked instance per key prefix, memoized. Each instance has an inline
-// extension that turns card keys (e.g. CO-40) into internal links. marked never
+// extension that turns card keys (e.g. AB-40) into internal links. marked never
 // runs inline tokenizers inside code spans/blocks, so keys in `code` stay
 // literal — satisfying the "don't link inside code" requirement for free.
 const cache = new Map<string, Marked>()

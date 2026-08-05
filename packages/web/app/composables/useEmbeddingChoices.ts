@@ -1,4 +1,4 @@
-import { EMBEDDING_DTYPES, EMBEDDING_MODELS } from '@claude-organizer/shared'
+import { EMBEDDING_DTYPES, EMBEDDING_MODELS } from '@agents-board/shared'
 
 // Human labels for the quantization variants so the picker conveys the
 // quality/memory trade-off (fp32 = highest precision/most memory → q8 = lowest

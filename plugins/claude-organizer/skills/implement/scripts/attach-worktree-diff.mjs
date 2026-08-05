@@ -3,8 +3,8 @@
 // REST API, so a card in review can show what will land before the commit
 // exists.
 //
-//   node scripts/attach-worktree-diff.mjs <CO-N>
-//   pnpm attach-worktree-diff <CO-N>
+//   node scripts/attach-worktree-diff.mjs <AB-N>
+//   pnpm attach-worktree-diff <AB-N>
 //
 // The card key is required (there is no commit message to parse it from). The
 // diff is `git diff HEAD` plus untracked files, posted under a sentinel sha so
@@ -16,7 +16,7 @@
 // duplicated from attach-commit.mjs on purpose: each script is standalone and
 // directly runnable (the .mjs/.py twins already mirror each other).
 //
-// Config: CO_API_URL (default http://127.0.0.1:4400).
+// Config: AB_API_URL (default http://127.0.0.1:4400).
 
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
@@ -26,19 +26,19 @@ import { readFileSync } from 'node:fs'
 process.stdout.setDefaultEncoding?.('utf8')
 process.stderr.setDefaultEncoding?.('utf8')
 
-const API_URL = (process.env.CO_API_URL || 'http://127.0.0.1:4400').replace(/\/$/, '')
+const API_URL = (process.env.AB_API_URL || 'http://127.0.0.1:4400').replace(/\/$/, '')
 
 // Card-scoped token minted by the MCP (issue_commit_token); only needed when the
 // API has auth on. Absent in sem-auth mode — then no extra header is sent.
-const COMMIT_TOKEN = process.env.CO_COMMIT_TOKEN
+const COMMIT_TOKEN = process.env.AB_COMMIT_TOKEN
 
 function withToken(headers = {}) {
   return COMMIT_TOKEN
-    ? { ...headers, 'X-CO-Commit-Token': COMMIT_TOKEN }
+    ? { ...headers, 'X-AB-Commit-Token': COMMIT_TOKEN }
     : headers
 }
 
-// Must match WORKING_TREE_SHA in @claude-organizer/shared.
+// Must match WORKING_TREE_SHA in @agents-board/shared.
 const WORKING_TREE_SHA = '__working__'
 
 // Files whose body is noise: store the header + a note instead of the patch.
@@ -54,7 +54,7 @@ const MAX_LINES_PER_FILE = 1000
 
 // Raster images are captured as before/after attachments and rendered in the web
 // diff (CO-392); other binaries keep the plain note. Mirrors the attachment
-// allow-list in @claude-organizer/shared.
+// allow-list in @agents-board/shared.
 const IMAGE_EXT_MIME = {
   png: 'image/png',
   jpg: 'image/jpeg',
@@ -77,7 +77,7 @@ function imageMime(path) {
 
 // The sentinel that replaces `Binary files … differ` so the web can render the
 // image. Must match buildDiffImageSentinel / DIFF_IMAGE_SENTINEL_PREFIX in
-// @claude-organizer/shared (a side is omitted when absent).
+// @agents-board/shared (a side is omitted when absent).
 function imageSentinel(oldId, newId) {
   let line = '# image'
   if (oldId) line += ` old=${oldId}`
@@ -262,7 +262,7 @@ async function clearPending(key) {
 async function main() {
   const key = process.argv[2]
   if (!key) {
-    fail('usage: attach-worktree-diff <CO-N>')
+    fail('usage: attach-worktree-diff <AB-N>')
   }
 
   const tracked = git(['diff', 'HEAD'])

@@ -10,8 +10,8 @@ import {
   listAttachments,
   listCards,
   listProjects
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 import { attachmentUri } from '../attachments'
 import {
@@ -103,10 +103,10 @@ export function registerResources(
 
   server.registerResource(
     'projects',
-    'organizer://projects',
+    'agents-board://projects',
     {
       title: 'Projects',
-      description: 'All projects tracked by claude-organizer.',
+      description: 'All projects tracked by agents-board.',
       mimeType: 'text/markdown'
     },
     async uri => md(uri, formatProjects(await scopedProjects()))
@@ -114,10 +114,10 @@ export function registerResources(
 
   server.registerResource(
     'board',
-    new ResourceTemplate('organizer://project/{slug}/board', {
+    new ResourceTemplate('agents-board://project/{slug}/board', {
       list: async () => ({
         resources: (await scopedProjects()).map(p => ({
-          uri: `organizer://project/${p.slug}/board`,
+          uri: `agents-board://project/${p.slug}/board`,
           name: `${p.name} — active sprint board`,
           mimeType: 'text/markdown'
         }))
@@ -155,10 +155,10 @@ export function registerResources(
 
   server.registerResource(
     'backlog',
-    new ResourceTemplate('organizer://project/{slug}/backlog', {
+    new ResourceTemplate('agents-board://project/{slug}/backlog', {
       list: async () => ({
         resources: (await scopedProjects()).map(p => ({
-          uri: `organizer://project/${p.slug}/backlog`,
+          uri: `agents-board://project/${p.slug}/backlog`,
           name: `${p.name} — backlog`,
           mimeType: 'text/markdown'
         }))
@@ -184,10 +184,10 @@ export function registerResources(
 
   server.registerResource(
     'card',
-    new ResourceTemplate('organizer://card/{key}', { list: undefined }),
+    new ResourceTemplate('agents-board://card/{key}', { list: undefined }),
     {
       title: 'Card detail',
-      description: 'Full markdown detail of a single card by its key (e.g. CO-12).',
+      description: 'Full markdown detail of a single card by its key (e.g. AB-12).',
       mimeType: 'text/markdown'
     },
     async (uri, { key }) => {

@@ -17,8 +17,8 @@ import {
   restoreCard,
   searchCards,
   updateCard
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 import { attachmentsForItem } from '../attachments'
 import { asJson, pageEnvelope, pageInputs } from './index'
@@ -184,7 +184,7 @@ export function registerCardTools(server: McpServer, db: Database) {
     'get_card_by_key',
     {
       description:
-        'Get a single card by its human-readable key (e.g. \'CO-12\') with full descriptionMd.',
+        'Get a single card by its human-readable key (e.g. \'AB-12\') with full descriptionMd.',
       inputSchema: { key: z.string() }
     },
     async ({ key }) => asJson(await withCommitsAndAttachments(db, await getCardByKey(db, key)))
@@ -194,13 +194,13 @@ export function registerCardTools(server: McpServer, db: Database) {
     'get_cards',
     {
       description:
-        'Batch-read full cards (WITH descriptionMd) by id (crd_xxx) and/or key (CO-12) in one call — the post-search companion to get_card when you need the detail of several hits at once. Mix ids and keys freely. Capped at 50 per call to keep the response bounded; pass offset to page when you have more than 50 refs.',
+        'Batch-read full cards (WITH descriptionMd) by id (crd_xxx) and/or key (AB-12) in one call — the post-search companion to get_card when you need the detail of several hits at once. Mix ids and keys freely. Capped at 50 per call to keep the response bounded; pass offset to page when you have more than 50 refs.',
       inputSchema: {
         ids: z
           .array(z.string())
           .min(1)
           .max(50)
-          .describe('Card ids (crd_xxx) and/or keys (CO-12), mixed — max 50 per call.'),
+          .describe('Card ids (crd_xxx) and/or keys (AB-12), mixed — max 50 per call.'),
         offset: z
           .number()
           .int()

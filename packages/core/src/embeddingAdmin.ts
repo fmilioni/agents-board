@@ -1,7 +1,7 @@
-import type { Database } from '@claude-organizer/db'
-import { reconcileEmbeddingDim } from '@claude-organizer/db'
-import type { EmbeddingRuntimeState, EmbeddingRuntimeStatus } from '@claude-organizer/shared'
-import { EMBEDDING_RUNTIME_SERVICE } from '@claude-organizer/shared'
+import type { Database } from '@agents-board/db'
+import { reconcileEmbeddingDim } from '@agents-board/db'
+import type { EmbeddingRuntimeState, EmbeddingRuntimeStatus } from '@agents-board/shared'
+import { EMBEDDING_RUNTIME_SERVICE } from '@agents-board/shared'
 
 import { getSystemSettings, setEmbeddingDtype, setEmbeddingModel } from './authz'
 import { backfillCardEmbeddings } from './cards'

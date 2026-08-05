@@ -7,7 +7,7 @@
 // (lockfiles/truncated/binary) surface as a muted note on the file block.
 import { diffWordsWithSpace } from 'diff'
 
-import { parseDiffImageSentinel } from '@claude-organizer/shared'
+import { parseDiffImageSentinel } from '@agents-board/shared'
 
 import { diffFileSignatures } from '~/utils/diffFiles'
 

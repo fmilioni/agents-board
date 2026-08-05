@@ -20,7 +20,7 @@ interface ScopedTokenPayload {
 export function resolveCommitTokenSecret(
   env: NodeJS.ProcessEnv = process.env
 ): string | null {
-  return env.CO_COMMIT_TOKEN_SECRET || env.BETTER_AUTH_SECRET || null
+  return env.AB_COMMIT_TOKEN_SECRET || env.BETTER_AUTH_SECRET || null
 }
 
 function sign(payload: string, secret: string): string {

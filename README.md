@@ -2,11 +2,11 @@
 
 # Claude Organizer
 
-### A "Jira" for Claude Code — your agent's project board, exposed over MCP.
+### A "Jira" for Codex — your agent's project board, exposed over MCP.
 
-Claude Organizer gives Claude Code a real project-management system — cards, sprints, comments and docs — as **queryable state over MCP**, instead of spec Markdown files that grow without bound and go stale. A clean Nuxt UI mirrors the same board for humans, in real time.
+Claude Organizer gives Codex a real project-management system — cards, sprints, comments and docs — as **queryable state over MCP**, instead of spec Markdown files that grow without bound and go stale. A clean Nuxt UI mirrors the same board for humans, in real time.
 
-It ships as a **Claude Code plugin** (three skills + the MCP server), backed by a pnpm monorepo you run with Docker — one command delivers the skills *and* registers the MCP, no `claude mcp add`.
+It ships as a **Codex plugin** (three user-facing skills, an internal reviewer skill, and the MCP server), backed by a pnpm monorepo you run with Docker. Install it once from the repository marketplace and the skills and local MCP connection become available together.
 
 <br/>
 
@@ -19,7 +19,7 @@ It ships as a **Claude Code plugin** (three skills + the MCP server), backed by 
 </div>
 
 > [!WARNING]
-> **Early stage — not yet stable.** Claude Organizer is under active development and not production-stable yet. Right now we're focused on **stabilizing the skills** (the `plan` / `implement` workflow the agent runs), so their behavior and the tool surface may still change between versions. Expect breaking changes — so keep the plugin's **auto-update off** (toggle it under `/plugin` → Marketplaces) and upgrade deliberately.
+> **Early stage — not yet stable.** Claude Organizer is under active development and not production-stable yet. Right now we're focused on **stabilizing the skills** (the `plan` / `implement` workflow the agent runs), so their behavior and the tool surface may still change between versions. Expect breaking changes and upgrade the plugin deliberately through Codex's `/plugins` browser or CLI.
 
 ---
 
@@ -90,61 +90,59 @@ Migrations run automatically before the API and MCP start, and a one-shot `backf
 
 ### 2. Install the plugin
 
-The plugin delivers the **skills** *and* registers the **MCP** — no `claude mcp add` needed.
-
-From a clone:
+The plugin delivers the **skills** *and* registers the **MCP**. Add this repository as a Codex marketplace, then install its plugin:
 
 ```bash
-claude --plugin-dir plugins/claude-organizer
+codex plugin marketplace add fmilioni/claude-organizer
+codex plugin add claude-organizer@claude-organizer
 ```
 
-Or via the marketplace:
-
-```text
-/plugin marketplace add fmilioni/claude-organizer
-/plugin install claude-organizer@claude-organizer
-```
-
-The `claude-organizer` tools appear automatically, pointing at local Docker (`http://127.0.0.1:4402/mcp`). Local Docker needs nothing more; to reach another host, see the next section.
+You can inspect or manage it interactively with `/plugins` in Codex CLI. Start a new Codex task after installation so its bundled skills and tools are loaded. The `claude-organizer` tools point at local Docker (`http://127.0.0.1:4402/mcp`) by default.
 
 ### 3. Configure the MCP for a remote host
 
 Local Docker is the default — nothing to do: the bundled plugin already registers a `claude-organizer` server at `http://127.0.0.1:4402/mcp`.
 
-**Repoint the bundled entry with `CO_MCP_URL`.** To make the **primary** board live on another machine — sharing one board across several computers — just export `CO_MCP_URL` before starting Claude Code; the plugin's `claude-organizer` server uses it instead of `http://127.0.0.1:4402/mcp`, keeping the same tool prefix. Reach it over a stable hostname (a Tailscale MagicDNS name like `host.tailnet.ts.net`, a LAN host, or a remote domain). Pair it with **`CO_API_URL`** (default `http://127.0.0.1:4400`) pointed at the same host — the helper scripts (`attach-commit` / `attach-worktree-diff` / `attach-image`) post to the API directly, so without it they'd hit the client machine's own `localhost` and fail:
+To use a board on another machine, register it as an additional named MCP server. Reach it over a stable hostname (a Tailscale MagicDNS name like `host.tailnet.ts.net`, a LAN host, or a remote domain). Pair it with **`AB_API_URL`** (default `http://127.0.0.1:4400`) pointed at the same host — the helper scripts (`attach-commit` / `attach-worktree-diff` / `attach-image`) post to the API directly, so without it they'd hit the client machine's own `localhost` and fail:
 
 ```bash
-export CO_MCP_URL=http://host.tailnet.ts.net:4402/mcp
-export CO_API_URL=http://host.tailnet.ts.net:4400
+export AB_API_URL=http://host.tailnet.ts.net:4400
+codex mcp add claude-organizer-remote --url http://host.tailnet.ts.net:4402/mcp
 ```
 
-**Or register an additional named server.** To run another board *alongside* the bundled one, register it as an **additional** server with a name **other than `claude-organizer`** (that one is the plugin's — reusing it clashes):
+Use a name **other than `claude-organizer`** because that name belongs to the bundled plugin. For a repository-scoped connection instead of a user-level one, add it to the trusted project's `.codex/config.toml`:
 
-```bash
-claude mcp add --transport http -s user claude-organizer-remote https://mcp.<domain>/mcp
+```toml
+[mcp_servers.claude-organizer-remote]
+url = "https://mcp.<domain>/mcp"
 ```
 
-Each server gets its own tool prefix (the bundled plugin board is `mcp__plugin_claude-organizer_claude-organizer__*`; this added one is `mcp__claude-organizer-remote__*`), OAuth session and projects; the skills pick the one whose project matches the repo and never mix them. `-s user` makes it available across all repos — to bind **a single project** to a specific server instead, scope it to the repo with `-s project` (a shared `.mcp.json` committed in the repo) or `-s local` (only you, only this repo).
+Each server gets its own tool namespace, OAuth session and projects; the skills pick the one whose project matches the repo and never mix them.
 
 ## Usage
 
-**You drive everything through one entry point** — the main `claude-organizer` command — and it routes to plan / implement for you:
+**You can drive everything through one entry point** — `$claude-organizer` — or invoke `$plan` and `$implement` directly:
 
 ```text
-/claude-organizer:claude-organizer plan github authentication
-/claude-organizer:claude-organizer implement task CO-123
-/claude-organizer:claude-organizer run story CO-127 all at once
+$claude-organizer plan GitHub authentication
+$plan break GitHub authentication into cards
+$implement task AB-123
+$implement run story AB-127 all at once
 ```
 
-Pass it your intent in plain language (any language) and it picks the right skill. The three skills behind it:
+Pass it your intent in plain language (any language) and it picks the right workflow. The three user-facing skills are:
 
 | Skill | What it does | Triggers when… |
 | --- | --- | --- |
-| **`claude-organizer`** | The entry point: what the board is, which skill to use, and binding the repo to its project (record `projectId` + auth flag in `CLAUDE.md`). | you reference the board — *"let's continue", "what's next?"* |
+| **`claude-organizer`** | The entry point: what the board is, which skill to use, and binding the repo to its project (record `projectId` + auth flag in `.claude-organizer.local.md`). | you reference the board — *"let's continue", "what's next?"* |
 | **`plan`** | Turn a fuzzy new demand into structured work (sprint → stories → tasks), get the design approved, then create the cards. | you describe something new to build, before it's broken down. |
-| **`implement`** | Execute existing cards through their lifecycle (`in_progress` → implement → review → commit), single-card or a multi-card run (story/sprint) in two modes — review each card, or run the whole batch autonomously. Fires a fresh-subagent review before each card closes. | you start/resume work on a specific card or ask to run a story/sprint — *"work CO-42", "run the sprint"*. |
+| **`implement`** | Execute existing cards through their lifecycle (`in_progress` → implement → review → commit), single-card or a multi-card run (story/sprint) in two modes — review each card, or run the whole batch autonomously. Fires a fresh-subagent review before each card closes. | you start/resume work on a specific card or ask to run a story/sprint — *"work AB-42", "run the sprint"*. |
 
 For a multi-card run, `implement` asks how to drive it: **review each card** (stop for your validation between cards) or **run it all at once** (execute the batch autonomously). In both modes it commits one-per-card on the git flow you agree, runs the review gate (and a story-level review when a story's last child finishes), and leaves each card in `review` for your final validation — it never merges on its own (no PR unless you ask). The review itself runs in a read-only **`reviewer`** subagent dispatched by `implement`.
+
+### Claude Code compatibility
+
+The legacy Claude Code plugin remains available from the same repository: add it with `/plugin marketplace add fmilioni/claude-organizer`, then `/plugin install claude-organizer@claude-organizer`. The tracked `CLAUDE.md` forwards to the shared `AGENTS.md`, so both hosts follow the same repository rules.
 
 ### Inbox
 
@@ -156,7 +154,7 @@ Auth is built on [better-auth](https://better-auth.com) and is **off by default*
 
 - **Methods** — email+password is the zero-config base; **GitHub OAuth** is optional and only appears when `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` are set (callback `https://api.<domain>/api/auth/callback/github`). No host is forced to register an OAuth app.
 - **Access** — users get **roles** and **per-project access**; admins manage who can see what.
-- **MCP** — with auth on, `/mcp` is an OAuth 2.1 resource server and the plugin obtains a bearer automatically (so `CO_MCP_URL` is still all you set). With auth off, `/mcp` is open, mirroring the open board.
+- **MCP** — with auth on, `/mcp` is an OAuth 2.1 resource server and the Codex MCP client obtains a bearer automatically. With auth off, `/mcp` is open, mirroring the open board.
 
 Relevant env (see `.env.example`):
 
@@ -184,14 +182,14 @@ Point DNS for the three subdomains at the host; Caddy issues/renews TLS (ACME). 
 
 ### Signing in from a terminal-only box (WSL, SSH, headless)
 
-With auth on, Claude Code runs the OAuth flow by opening a browser and waiting on a **local loopback callback** (`http://localhost:<random-port>/…`). In a terminal-only environment that stalls — no browser opens (Claude Code prints the URL instead — open it yourself), and the loopback redirect must be able to reach back into the box (WSL2 forwards `localhost` by default; over SSH, forward the port with `ssh -L <port>:localhost:<port> …`). Keep one host throughout — don't mix `localhost` and `127.0.0.1`, or the login won't stick.
+With auth on, Codex runs the OAuth flow by opening a browser and waiting on a **local loopback callback** (`http://localhost:<random-port>/…`). In a terminal-only environment that stalls — no browser opens (Codex prints the URL instead — open it yourself), and the loopback redirect must be able to reach back into the box (WSL2 forwards `localhost` by default; over SSH, forward the port with `ssh -L <port>:localhost:<port> …`). Keep one host throughout — don't mix `localhost` and `127.0.0.1`, or the login won't stick.
 
-**The reliable escape hatch:** auth is **off by default** and an open board needs no login at all. For a local/WSL dev box, leave auth off and skip the loopback flow entirely; turn auth on where a browser-reachable login exists — e.g. a remote deployment behind the reverse proxy, reached over normal `https://`. The loopback dance is Claude Code's MCP client plus your box's networking; Claude Organizer is a standard OAuth 2.1 resource server and can't shortcut it server-side.
+**The reliable escape hatch:** auth is **off by default** and an open board needs no login at all. For a local/WSL dev box, leave auth off and skip the loopback flow entirely; turn auth on where a browser-reachable login exists — e.g. a remote deployment behind the reverse proxy, reached over normal `https://`. The loopback dance depends on the MCP client and your box's networking; Claude Organizer is a standard OAuth 2.1 resource server and can't shortcut it server-side.
 
 ## Architecture
 
 ```text
-Claude Code ──HTTP──▶ MCP (:4402/mcp) ─┐
+Codex ───────HTTP──▶ MCP (:4402/mcp) ──┐
                                        ├─▶ core ──▶ Postgres 16
 Browser (SPA) ──HTTP──▶ API (:4400) ───┘   (+ WebSocket /ws for real-time)
                             └─ core ──HTTP──▶ Embedding service (:4403) ──▶ model

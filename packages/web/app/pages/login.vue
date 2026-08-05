@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 
-import type { AuthCapabilities, EmbeddingDtype } from '@claude-organizer/shared'
+import type { AuthCapabilities, EmbeddingDtype } from '@agents-board/shared'
 
 definePageMeta({ layout: false })
 
@@ -74,7 +74,7 @@ const subtitle = computed(() =>
     ? 'First run: create the board administrator account.'
     : isSignup.value
       ? 'Create your account. An administrator must approve access.'
-      : 'Sign in to Claude Organizer.'
+      : 'Sign in to Agents Board.'
 )
 const submitLabel = computed(() =>
   setupMode.value

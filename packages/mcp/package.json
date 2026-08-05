@@ -1,11 +1,11 @@
 {
-  "name": "@claude-organizer/mcp",
+  "name": "@agents-board/mcp",
   "version": "0.35.1",
   "private": true,
   "type": "module",
   "main": "./src/server.ts",
   "bin": {
-    "claude-organizer-mcp": "./dist/server.mjs"
+    "agents-board-mcp": "./dist/server.mjs"
   },
   "files": [
     "dist"
@@ -19,10 +19,10 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@claude-organizer/auth": "workspace:*",
-    "@claude-organizer/core": "workspace:*",
-    "@claude-organizer/db": "workspace:*",
-    "@claude-organizer/shared": "workspace:*",
+    "@agents-board/auth": "workspace:*",
+    "@agents-board/core": "workspace:*",
+    "@agents-board/db": "workspace:*",
+    "@agents-board/shared": "workspace:*",
     "@modelcontextprotocol/sdk": "1.29.0",
     "better-auth": "1.6.14",
     "zod": "4.4.3"

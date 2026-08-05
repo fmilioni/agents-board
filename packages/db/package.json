@@ -1,5 +1,5 @@
 {
-  "name": "@claude-organizer/db",
+  "name": "@agents-board/db",
   "version": "0.35.1",
   "private": true,
   "type": "module",
@@ -19,7 +19,7 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@claude-organizer/shared": "workspace:*",
+    "@agents-board/shared": "workspace:*",
     "drizzle-orm": "0.45.2",
     "nanoid": "5.1.11",
     "postgres": "3.4.9"

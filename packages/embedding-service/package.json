@@ -1,5 +1,5 @@
 {
-  "name": "@claude-organizer/embedding-service",
+  "name": "@agents-board/embedding-service",
   "version": "0.35.1",
   "private": true,
   "type": "module",
@@ -15,9 +15,9 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@claude-organizer/core": "workspace:*",
-    "@claude-organizer/db": "workspace:*",
-    "@claude-organizer/shared": "workspace:*",
+    "@agents-board/core": "workspace:*",
+    "@agents-board/db": "workspace:*",
+    "@agents-board/shared": "workspace:*",
     "@huggingface/transformers": "4.2.0"
   },
   "devDependencies": {

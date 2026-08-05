@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 // Capture a commit's diff and attach it to its card via the REST API.
 //
-//   node scripts/attach-commit.mjs <sha> [CO-N]
-//   pnpm attach-commit <sha> [CO-N]
+//   node scripts/attach-commit.mjs <sha> [AB-N]
+//   pnpm attach-commit <sha> [AB-N]
 //
-// The card key is parsed from the commit message (`feat(...): … (CO-12)`) unless
+// The card key is parsed from the commit message (`feat(...): … (AB-12)`) unless
 // passed explicitly. The diff goes straight from `git` to the API over HTTP — it
 // never passes through an AI context (no MCP, no tokens spent reading it).
 //
 // Zero dependencies: standalone Node 18+ (global fetch). A Python twin lives at
 // scripts/attach-commit.py for machines without Node. Keep the two in sync.
 //
-// Config: CO_API_URL (default http://127.0.0.1:4400).
+// Config: AB_API_URL (default http://127.0.0.1:4400).
 
 import { execFileSync } from 'node:child_process'
 
@@ -20,15 +20,15 @@ import { execFileSync } from 'node:child_process'
 process.stdout.setDefaultEncoding?.('utf8')
 process.stderr.setDefaultEncoding?.('utf8')
 
-const API_URL = (process.env.CO_API_URL || 'http://127.0.0.1:4400').replace(/\/$/, '')
+const API_URL = (process.env.AB_API_URL || 'http://127.0.0.1:4400').replace(/\/$/, '')
 
 // Card-scoped token minted by the MCP (issue_commit_token); only needed when the
 // API has auth on. Absent in sem-auth mode — then no extra header is sent.
-const COMMIT_TOKEN = process.env.CO_COMMIT_TOKEN
+const COMMIT_TOKEN = process.env.AB_COMMIT_TOKEN
 
 function withToken(headers = {}) {
   return COMMIT_TOKEN
-    ? { ...headers, 'X-CO-Commit-Token': COMMIT_TOKEN }
+    ? { ...headers, 'X-AB-Commit-Token': COMMIT_TOKEN }
     : headers
 }
 
@@ -45,7 +45,7 @@ const MAX_LINES_PER_FILE = 1000
 
 // Raster images are captured as before/after attachments and rendered in the web
 // diff (CO-392); other binaries keep the plain note. Mirrors the attachment
-// allow-list in @claude-organizer/shared.
+// allow-list in @agents-board/shared.
 const IMAGE_EXT_MIME = {
   png: 'image/png',
   jpg: 'image/jpeg',
@@ -68,7 +68,7 @@ function imageMime(path) {
 
 // The sentinel that replaces `Binary files … differ` so the web can render the
 // image. Must match buildDiffImageSentinel / DIFF_IMAGE_SENTINEL_PREFIX in
-// @claude-organizer/shared (a side is omitted when absent).
+// @agents-board/shared (a side is omitted when absent).
 function imageSentinel(oldId, newId) {
   let line = '# image'
   if (oldId) line += ` old=${oldId}`
@@ -122,7 +122,7 @@ function git(args) {
   }
 }
 
-// `CO-12`, `ABC-7` — an uppercase prefix, a dash, digits. We prefer the last
+// `AB-12`, `ABC-7` — an uppercase prefix, a dash, digits. We prefer the last
 // match on the subject line (the project convention puts the card's own key at
 // the end of the subject), then fall back to the whole message.
 const KEY_RE = /\b([A-Z][A-Z0-9]*-\d+)\b/g
@@ -214,7 +214,7 @@ function humanBytes(n) {
 async function main() {
   const [shaArg, keyArg] = process.argv.slice(2)
   if (!shaArg) {
-    fail('usage: attach-commit <sha> [CO-N]')
+    fail('usage: attach-commit <sha> [AB-N]')
   }
 
   // Validate the sha and normalise it to the full hash.
@@ -227,7 +227,7 @@ async function main() {
   const key = keyArg || parseKey(message)
   if (!key) {
     fail(
-      `no card key found in the message of ${sha.slice(0, 8)}; pass one explicitly: attach-commit ${shaArg} CO-N`
+      `no card key found in the message of ${sha.slice(0, 8)}; pass one explicitly: attach-commit ${shaArg} AB-N`
     )
   }
 

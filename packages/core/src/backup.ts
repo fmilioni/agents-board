@@ -3,7 +3,7 @@ import { gunzipSync, gzipSync } from 'node:zlib'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
-import { createId, type Database, schema } from '@claude-organizer/db'
+import { createId, type Database, schema } from '@agents-board/db'
 import {
   type AttachmentRow,
   BACKUP_FORMAT_VERSION,
@@ -18,7 +18,7 @@ import {
   type RoadmapRow,
   type SprintRow,
   type TagRow
-} from '@claude-organizer/shared'
+} from '@agents-board/shared'
 
 import { reconcileAttachmentLinks } from './attachmentLinks'
 import { rewriteAttachmentIds } from './attachments'
@@ -317,7 +317,7 @@ export interface ImportResult {
 
 /**
  * Import a backup as a brand-new copy (non-destructive): old internal ids are
- * remapped to fresh ones and FKs reattached, while human keys (`CO-N`) and the
+ * remapped to fresh ones and FKs reattached, while human keys (`<PREFIX>-N`) and the
  * project's `nextKeySeq` are preserved. A slug/keyPrefix already taken in the
  * destination is deterministically suffixed. Runs the version-migration chain
  * first, so an older backup opens on the current server.

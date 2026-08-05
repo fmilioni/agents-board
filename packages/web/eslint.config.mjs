@@ -23,8 +23,8 @@ export default withNuxt({
           ['^node:'],
           // External packages.
           ['^'],
-          // Internal workspace packages (@claude-organizer/*).
-          ['^@claude-organizer/'],
+          // Internal workspace packages (@agents-board/*).
+          ['^@agents-board/'],
           // Nuxt virtual modules (#app, #imports, …).
           ['^#'],
           // App alias (~/...).

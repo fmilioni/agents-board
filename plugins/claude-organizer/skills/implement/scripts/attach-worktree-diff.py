@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Capture the working-tree (uncommitted) diff and attach it to a card.
 
-    python3 scripts/attach-worktree-diff.py <CO-N>
+    python3 scripts/attach-worktree-diff.py <AB-N>
 
 The card key is required (there is no commit message to parse it from). The diff
 is ``git diff HEAD`` plus untracked files, posted under a sentinel sha so the
@@ -12,7 +12,7 @@ Standard library only; a Node twin lives at scripts/attach-worktree-diff.mjs —
 keep the two in sync. The diff helpers are duplicated from attach-commit.py on
 purpose: each script is standalone and directly runnable.
 
-Config: CO_API_URL (default http://127.0.0.1:4400).
+Config: AB_API_URL (default http://127.0.0.1:4400).
 """
 
 import json
@@ -31,20 +31,20 @@ for _stream in (sys.stdout, sys.stderr):
     except (AttributeError, ValueError):
         pass
 
-API_URL = os.environ.get("CO_API_URL", "http://127.0.0.1:4400").rstrip("/")
+API_URL = os.environ.get("AB_API_URL", "http://127.0.0.1:4400").rstrip("/")
 
 # Card-scoped token minted by the MCP (issue_commit_token); only needed when the
 # API has auth on. Absent in sem-auth mode — then no extra header is sent.
-COMMIT_TOKEN = os.environ.get("CO_COMMIT_TOKEN")
+COMMIT_TOKEN = os.environ.get("AB_COMMIT_TOKEN")
 
 
 def with_token(headers=None):
     headers = dict(headers or {})
     if COMMIT_TOKEN:
-        headers["X-CO-Commit-Token"] = COMMIT_TOKEN
+        headers["X-AB-Commit-Token"] = COMMIT_TOKEN
     return headers
 
-# Must match WORKING_TREE_SHA in @claude-organizer/shared.
+# Must match WORKING_TREE_SHA in @agents-board/shared.
 WORKING_TREE_SHA = "__working__"
 
 # Files whose body is noise: store the header + a note instead of the patch.
@@ -60,7 +60,7 @@ MAX_LINES_PER_FILE = 1000
 
 # Raster images are captured as before/after attachments and rendered in the web
 # diff (CO-392); other binaries keep the plain note. Mirrors the attachment
-# allow-list in @claude-organizer/shared.
+# allow-list in @agents-board/shared.
 IMAGE_EXT_MIME = {
     "png": "image/png",
     "jpg": "image/jpeg",
@@ -129,7 +129,7 @@ def image_mime(path):
 
 # The sentinel that replaces `Binary files … differ` so the web can render the
 # image. Must match buildDiffImageSentinel / DIFF_IMAGE_SENTINEL_PREFIX in
-# @claude-organizer/shared (a side is omitted when absent).
+# @agents-board/shared (a side is omitted when absent).
 def image_sentinel(old_id, new_id):
     line = "# image"
     if old_id:
@@ -300,7 +300,7 @@ def clear_pending(key):
 def main():
     args = sys.argv[1:]
     if not args:
-        fail("usage: attach-worktree-diff <CO-N>")
+        fail("usage: attach-worktree-diff <AB-N>")
     key = args[0]
 
     tracked = git(["diff", "HEAD"])

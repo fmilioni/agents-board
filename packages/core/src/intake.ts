@@ -1,12 +1,12 @@
 import { and, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
-import { createId, type Database, schema } from '@claude-organizer/db'
+import { createId, type Database, schema } from '@agents-board/db'
 import {
   type CardStatus,
   INTAKE_STATUSES,
   type IntakeStatus
-} from '@claude-organizer/shared'
+} from '@agents-board/shared'
 
 import { gcAttachmentsOnArchive, gcAttachmentsOnDestroy } from './attachmentGc'
 import { reconcileAttachmentLinks } from './attachmentLinks'

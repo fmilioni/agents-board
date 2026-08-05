@@ -10,8 +10,8 @@ import {
   restoreDoc,
   searchDocs,
   updateDoc
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 import { attachmentsForItem } from '../attachments'
 import { asJson, pageEnvelope, pageInputs } from './index'

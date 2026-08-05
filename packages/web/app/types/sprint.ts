@@ -1,1 +1,1 @@
-export type { Sprint, SprintStatus } from '@claude-organizer/shared'
+export type { Sprint, SprintStatus } from '@agents-board/shared'

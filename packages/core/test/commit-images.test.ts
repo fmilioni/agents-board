@@ -1,12 +1,12 @@
 import { and, eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 
-import { schema } from '@claude-organizer/db'
+import { schema } from '@agents-board/db'
 import {
   buildDiffImageSentinel,
   type DiffImageRefs,
   WORKING_TREE_SHA
-} from '@claude-organizer/shared'
+} from '@agents-board/shared'
 
 import {
   archiveCard,

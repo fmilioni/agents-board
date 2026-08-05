@@ -13,16 +13,16 @@
 // Zero dependencies: standalone Node 18+ (global fetch). A Python twin lives at
 // scripts/attach-image.py for machines without Node. Keep the two in sync.
 //
-// Config: CO_API_URL (default http://127.0.0.1:4400), CO_UPLOAD_TOKEN (only with
+// Config: AB_API_URL (default http://127.0.0.1:4400), AB_UPLOAD_TOKEN (only with
 // auth on — mint it with the MCP's issue_upload_token).
 
 import { readFileSync, statSync } from 'node:fs'
 import { basename, extname } from 'node:path'
 
-const API_URL = (process.env.CO_API_URL || 'http://127.0.0.1:4400').replace(/\/$/, '')
-const UPLOAD_TOKEN = process.env.CO_UPLOAD_TOKEN
+const API_URL = (process.env.AB_API_URL || 'http://127.0.0.1:4400').replace(/\/$/, '')
+const UPLOAD_TOKEN = process.env.AB_UPLOAD_TOKEN
 
-// Mirrors ATTACHMENT_MIME_TYPES in @claude-organizer/shared.
+// Mirrors ATTACHMENT_MIME_TYPES in @agents-board/shared.
 const EXT_MIME = {
   png: 'image/png',
   jpg: 'image/jpeg',
@@ -77,7 +77,7 @@ async function main() {
     `${API_URL}/attachments?projectId=${encodeURIComponent(projectId)}`,
     {
       method: 'POST',
-      headers: UPLOAD_TOKEN ? { 'X-CO-Upload-Token': UPLOAD_TOKEN } : {},
+      headers: UPLOAD_TOKEN ? { 'X-AB-Upload-Token': UPLOAD_TOKEN } : {},
       body: form
     }
   ).catch((err) => {
@@ -86,7 +86,7 @@ async function main() {
 
   if (res.status === 401) {
     fail(
-      'API responded 401: auth is on and no valid upload token was sent. Mint one with issue_upload_token(<projectId>) and re-run with CO_UPLOAD_TOKEN=<token>.'
+      'API responded 401: auth is on and no valid upload token was sent. Mint one with issue_upload_token(<projectId>) and re-run with AB_UPLOAD_TOKEN=<token>.'
     )
   }
   if (!res.ok) {

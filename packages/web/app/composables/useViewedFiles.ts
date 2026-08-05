@@ -5,7 +5,7 @@ import type { DiffFileSignature } from '~/utils/diffFiles'
 // MAX_CARDS cards are kept (LRU by last touch), and a file entry only counts as
 // viewed while its stored hash matches the current diff (a changed file drops to
 // unviewed and reconcile() prunes the dead entry).
-const STORAGE_KEY = 'co:diff-viewed'
+const STORAGE_KEY = 'agents-board:diff-viewed'
 const MAX_CARDS = 40
 
 interface CardEntry {

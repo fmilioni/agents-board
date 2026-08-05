@@ -1,5 +1,5 @@
 {
-  "name": "@claude-organizer/shared",
+  "name": "@agents-board/shared",
   "version": "0.35.1",
   "private": true,
   "type": "module",

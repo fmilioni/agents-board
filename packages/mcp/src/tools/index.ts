@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 
-import type { Database } from '@claude-organizer/db'
+import type { Database } from '@agents-board/db'
 
 import type { McpScope } from '../scope'
 import { registerBlockerTools } from './blockers'

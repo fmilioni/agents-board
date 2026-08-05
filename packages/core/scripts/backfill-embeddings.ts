@@ -2,7 +2,7 @@ import { resolve } from 'node:path'
 import { loadEnvFile } from 'node:process'
 import { fileURLToPath } from 'node:url'
 
-import { createDb } from '@claude-organizer/db'
+import { createDb } from '@agents-board/db'
 
 import {
   backfillCardEmbeddings,

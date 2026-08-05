@@ -1,6 +1,6 @@
 import { eq, sql } from 'drizzle-orm'
 
-import { resolveEmbeddingConfig } from '@claude-organizer/shared'
+import { resolveEmbeddingConfig } from '@agents-board/shared'
 
 import type { Database } from './client'
 import { SYSTEM_SETTINGS_ID, systemSettings } from './schema/systemSettings'

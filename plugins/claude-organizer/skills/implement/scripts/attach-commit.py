@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Capture a commit's diff and attach it to its card via the REST API.
 
-    python3 scripts/attach-commit.py <sha> [CO-N]
+    python3 scripts/attach-commit.py <sha> [AB-N]
 
-The card key is parsed from the commit message (``feat(...): … (CO-12)``) unless
+The card key is parsed from the commit message (``feat(...): … (AB-12)``) unless
 passed explicitly. The diff goes straight from ``git`` to the API over HTTP — it
 never passes through an AI context (no MCP, no tokens spent reading it).
 
 Standard library only; a Node twin lives at scripts/attach-commit.mjs for
 machines without Python. Keep the two in sync.
 
-Config: CO_API_URL (default http://127.0.0.1:4400).
+Config: AB_API_URL (default http://127.0.0.1:4400).
 """
 
 import json
@@ -29,16 +29,16 @@ for _stream in (sys.stdout, sys.stderr):
     except (AttributeError, ValueError):
         pass
 
-API_URL = os.environ.get("CO_API_URL", "http://127.0.0.1:4400").rstrip("/")
+API_URL = os.environ.get("AB_API_URL", "http://127.0.0.1:4400").rstrip("/")
 
 # Card-scoped token minted by the MCP (issue_commit_token); only needed when the
 # API has auth on. Absent in sem-auth mode — then no extra header is sent.
-COMMIT_TOKEN = os.environ.get("CO_COMMIT_TOKEN")
+COMMIT_TOKEN = os.environ.get("AB_COMMIT_TOKEN")
 
 
 def with_token(headers):
     if COMMIT_TOKEN:
-        return {**headers, "X-CO-Commit-Token": COMMIT_TOKEN}
+        return {**headers, "X-AB-Commit-Token": COMMIT_TOKEN}
     return headers
 
 # Files whose body is noise: store the header + a note instead of the patch.
@@ -54,7 +54,7 @@ MAX_LINES_PER_FILE = 1000
 
 # Raster images are captured as before/after attachments and rendered in the web
 # diff (CO-392); other binaries keep the plain note. Mirrors the attachment
-# allow-list in @claude-organizer/shared.
+# allow-list in @agents-board/shared.
 IMAGE_EXT_MIME = {
     "png": "image/png",
     "jpg": "image/jpeg",
@@ -66,7 +66,7 @@ IMAGE_EXT_MIME = {
 # 10 MB upload ceiling so we never ship a blob the server would reject.
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
-# `CO-12`, `ABC-7` — an uppercase prefix, a dash, digits.
+# `AB-12`, `ABC-7` — an uppercase prefix, a dash, digits.
 KEY_RE = re.compile(r"\b([A-Z][A-Z0-9]*-\d+)\b")
 
 
@@ -95,7 +95,7 @@ def image_mime(path):
 
 # The sentinel that replaces `Binary files … differ` so the web can render the
 # image. Must match buildDiffImageSentinel / DIFF_IMAGE_SENTINEL_PREFIX in
-# @claude-organizer/shared (a side is omitted when absent).
+# @agents-board/shared (a side is omitted when absent).
 def image_sentinel(old_id, new_id):
     line = "# image"
     if old_id:
@@ -251,7 +251,7 @@ def human_bytes(n):
 def main():
     args = sys.argv[1:]
     if not args:
-        fail("usage: attach-commit <sha> [CO-N]")
+        fail("usage: attach-commit <sha> [AB-N]")
     sha_arg = args[0]
     key_arg = args[1] if len(args) > 1 else None
 
@@ -266,7 +266,7 @@ def main():
     if not key:
         fail(
             f"no card key found in the message of {sha[:8]}; "
-            f"pass one explicitly: attach-commit {sha_arg} CO-N"
+            f"pass one explicitly: attach-commit {sha_arg} AB-N"
         )
 
     stat = git(["show", sha, "--stat", "--format="]).strip("\n")

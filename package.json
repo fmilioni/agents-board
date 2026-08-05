@@ -1,8 +1,8 @@
 {
-  "name": "claude-organizer",
+  "name": "agents-board",
   "version": "0.35.1",
   "private": true,
-  "description": "Project management system for Claude Code: cards, sprints, roadmaps, docs - exposed via MCP",
+  "description": "Project management system for AI coding agents: cards, sprints, roadmaps, and docs exposed via MCP",
   "packageManager": "pnpm@9.12.0",
   "engines": {
     "node": ">=24.0.0"
@@ -11,14 +11,14 @@
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
-    "db:generate": "pnpm --filter @claude-organizer/db generate",
-    "db:migrate": "pnpm --filter @claude-organizer/db migrate",
-    "db:studio": "pnpm --filter @claude-organizer/db studio",
+    "db:generate": "pnpm --filter @agents-board/db generate",
+    "db:migrate": "pnpm --filter @agents-board/db migrate",
+    "db:studio": "pnpm --filter @agents-board/db studio",
     "backfill:embeddings": "tsx packages/core/scripts/backfill-embeddings.ts",
-    "dev:api": "pnpm --filter @claude-organizer/api dev",
-    "dev:web": "pnpm --filter @claude-organizer/web dev",
-    "dev:mcp": "pnpm --filter @claude-organizer/mcp dev",
-    "dev:embedding": "pnpm --filter @claude-organizer/embedding-service dev",
+    "dev:api": "pnpm --filter @agents-board/api dev",
+    "dev:web": "pnpm --filter @agents-board/web dev",
+    "dev:mcp": "pnpm --filter @agents-board/mcp dev",
+    "dev:embedding": "pnpm --filter @agents-board/embedding-service dev",
     "dev": "pnpm db:up && pnpm -r --parallel --filter './packages/*' dev",
     "build": "pnpm -r build",
     "attach-commit": "node plugins/claude-organizer/skills/implement/scripts/attach-commit.mjs",
@@ -26,7 +26,7 @@
     "attach-worktree-diff": "node plugins/claude-organizer/skills/implement/scripts/attach-worktree-diff.mjs",
     "bump": "node scripts/bump-version.mjs",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm --filter @claude-organizer/core test",
+    "test": "pnpm --filter @agents-board/core test",
     "lint": "pnpm -r lint"
   },
   "devDependencies": {

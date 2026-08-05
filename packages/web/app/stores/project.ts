@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 
-import type { Project } from '@claude-organizer/shared'
+import type { Project } from '@agents-board/shared'
 
-const CURRENT_PROJECT_COOKIE = 'organizer.currentProjectSlug'
+const CURRENT_PROJECT_COOKIE = 'agents-board.currentProjectSlug'
 
 export const useProjectStore = defineStore('project', () => {
   const projects = ref<Project[]>([])

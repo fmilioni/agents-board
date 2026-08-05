@@ -49,7 +49,7 @@ export default tseslint.config(
             // External packages.
             ['^'],
             // Internal workspace packages.
-            ['^@claude-organizer/'],
+            ['^@agents-board/'],
             // Relative imports.
             ['^\\.']
           ]

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 
-import { addBlocker, removeBlocker } from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+import { addBlocker, removeBlocker } from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 export function registerBlockerRoutes(app: FastifyInstance, db: Database) {
   // `cardId` is the blocked card; `blockerId` is the card that blocks it.

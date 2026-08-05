@@ -2,7 +2,7 @@ import type { FastifyError } from 'fastify'
 import fp from 'fastify-plugin'
 import { ZodError } from 'zod'
 
-import { ConflictError, InputError } from '@claude-organizer/core'
+import { ConflictError, InputError } from '@agents-board/core'
 
 /**
  * Single place that turns a thrown error into an HTTP response, so routes can

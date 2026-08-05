@@ -2,9 +2,9 @@ import {
   clearRuntimeEmbeddingConfig,
   recordRuntimeEmbeddingConfig,
   resolveEffectiveEmbeddingConfig
-} from '@claude-organizer/core'
-import { createDb } from '@claude-organizer/db'
-import { EMBEDDING_RUNTIME_SERVICE } from '@claude-organizer/shared'
+} from '@agents-board/core'
+import { createDb } from '@agents-board/db'
+import { EMBEDDING_RUNTIME_SERVICE } from '@agents-board/shared'
 
 import { createEmbedder, warmUp } from './embedder'
 import { createEmbeddingHttpServer } from './http'

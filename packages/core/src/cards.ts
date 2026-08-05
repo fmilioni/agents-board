@@ -15,7 +15,7 @@ import {
 } from 'drizzle-orm'
 import { z } from 'zod'
 
-import { createId, type Database, schema } from '@claude-organizer/db'
+import { createId, type Database, schema } from '@agents-board/db'
 
 import { archivedCondition, type ArchiveFilter } from './archive'
 import { gcAttachmentsOnArchive, gcAttachmentsOnDestroy } from './attachmentGc'
@@ -283,11 +283,11 @@ async function withMatchedComments<T extends { id: string, parentId: string | nu
 }
 
 /**
- * When the whole trimmed query is a card-key reference — a full key (`CO-375`,
+ * When the whole trimmed query is a card-key reference — a full key (`AB-375`,
  * case-insensitive) or a bare number (`375`, resolved via the project's
  * keyPrefix) — return that card's id IF it still passes the active search
  * filters, so the caller can pin it first. A partial number (`37`) resolves to
- * `<prefix>-37`, never `CO-375`; any query with text past the key matches
+ * `<prefix>-37`, never `AB-375`; any query with text past the key matches
  * neither pattern and yields no pin.
  */
 async function exactKeyMatchId(

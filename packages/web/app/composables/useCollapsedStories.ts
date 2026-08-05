@@ -4,10 +4,10 @@ import type { MaybeRefOrGetter } from 'vue'
 // backend — a pure view preference, works auth on or off). Mirrors
 // useViewedFiles: a module singleton over localStorage, bounded by pruning a
 // project's entry once nothing is collapsed so the map can't grow forever.
-const STORAGE_KEY = 'co:board-collapsed-stories'
+const STORAGE_KEY = 'agents-board:board-collapsed-stories'
 
 interface Store {
-  // projectId → collapsed story parentKeys (e.g. "CO-42")
+  // projectId → collapsed story parentKeys (e.g. "AB-42")
   projects: Record<string, string[]>
 }
 

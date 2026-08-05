@@ -1,1 +1,1 @@
-export type { IntakeItem, IntakeStatus } from '@claude-organizer/shared'
+export type { IntakeItem, IntakeStatus } from '@agents-board/shared'

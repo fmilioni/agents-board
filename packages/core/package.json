@@ -1,5 +1,5 @@
 {
-  "name": "@claude-organizer/core",
+  "name": "@agents-board/core",
   "version": "0.35.1",
   "private": true,
   "type": "module",
@@ -16,8 +16,8 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@claude-organizer/db": "workspace:*",
-    "@claude-organizer/shared": "workspace:*",
+    "@agents-board/db": "workspace:*",
+    "@agents-board/shared": "workspace:*",
     "drizzle-orm": "0.45.2",
     "zod": "4.4.3"
   },

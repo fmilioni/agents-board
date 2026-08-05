@@ -1,7 +1,7 @@
 import { and, asc, eq, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 
-import { createId, type Database, schema } from '@claude-organizer/db'
+import { createId, type Database, schema } from '@agents-board/db'
 
 import { notify } from './events'
 import { paginate } from './pagination'

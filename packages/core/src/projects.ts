@@ -1,8 +1,8 @@
 import { eq, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
-import { createId, type Database, schema } from '@claude-organizer/db'
-import { REPO_PROVIDERS } from '@claude-organizer/shared'
+import { createId, type Database, schema } from '@agents-board/db'
+import { REPO_PROVIDERS } from '@agents-board/shared'
 
 import { archivedCondition, type ArchiveFilter } from './archive'
 import { InputError } from './errors'
@@ -159,7 +159,7 @@ export type SetProjectRepoInput = z.input<typeof setProjectRepoInput>
 
 /**
  * Point a project at its source repository (or clear it with nulls) so the web
- * can link a commit hash to the provider's commit page. The claude-organizer
+ * can link a commit hash to the provider's commit page. The agents-board
  * skill detects the git remote and calls this; there is no manual edit UI yet.
  */
 export async function setProjectRepo(db: Database, input: SetProjectRepoInput) {

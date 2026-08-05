@@ -1,12 +1,12 @@
 import fp from 'fastify-plugin'
 import postgres from 'postgres'
 
-import { type CoEvent, EVENT_CHANNEL } from '@claude-organizer/core'
+import { type AbEvent, EVENT_CHANNEL } from '@agents-board/core'
 
 declare module 'fastify' {
   interface FastifyInstance {
     events: {
-      subscribe(handler: (event: CoEvent) => void): () => void
+      subscribe(handler: (event: AbEvent) => void): () => void
     }
   }
 }
@@ -18,12 +18,12 @@ export default fp(async (app) => {
   // Dedicated connection for LISTEN - postgres.js manages it internally.
   const sql = postgres(url, { max: 1, idle_timeout: 0 })
 
-  const handlers = new Set<(event: CoEvent) => void>()
+  const handlers = new Set<(event: AbEvent) => void>()
 
   await sql.listen(EVENT_CHANNEL, (payload) => {
     if (!payload) return
     try {
-      const event = JSON.parse(payload) as CoEvent
+      const event = JSON.parse(payload) as AbEvent
       for (const handler of handlers) {
         try {
           handler(event)

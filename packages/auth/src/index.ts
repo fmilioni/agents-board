@@ -7,8 +7,8 @@ import {
   withMcpAuth
 } from 'better-auth/plugins'
 
-import { claimOrCreateUserAuthz } from '@claude-organizer/core'
-import { createId, type Database, idPrefixes } from '@claude-organizer/db'
+import { claimOrCreateUserAuthz } from '@agents-board/core'
+import { createId, type Database, idPrefixes } from '@agents-board/db'
 import {
   accounts,
   oauthAccessTokens,
@@ -17,7 +17,7 @@ import {
   sessions,
   users,
   verifications
-} from '@claude-organizer/db/schema'
+} from '@agents-board/db/schema'
 
 export { oAuthDiscoveryMetadata, oAuthProtectedResourceMetadata, withMcpAuth }
 
@@ -93,7 +93,7 @@ export function createAuth(db: Database) {
   const loginPage = getMcpLoginPage()
   const cookieDomain = process.env.AUTH_COOKIE_DOMAIN?.trim()
   return betterAuth({
-    appName: 'Claude Organizer',
+    appName: 'Agents Board',
     database: drizzleAdapter(db, {
       provider: 'pg',
       usePlural: true,

@@ -24,7 +24,7 @@ RUN pnpm install --offline --frozen-lockfile
 ARG NUXT_PUBLIC_API_URL=http://127.0.0.1:4400
 ENV NUXT_PUBLIC_API_URL=$NUXT_PUBLIC_API_URL
 
-RUN pnpm --filter @claude-organizer/api build \
-  && pnpm --filter @claude-organizer/mcp build \
-  && pnpm --filter @claude-organizer/embedding-service build \
-  && pnpm --filter @claude-organizer/web build
+RUN pnpm --filter @agents-board/api build \
+  && pnpm --filter @agents-board/mcp build \
+  && pnpm --filter @agents-board/embedding-service build \
+  && pnpm --filter @agents-board/web build

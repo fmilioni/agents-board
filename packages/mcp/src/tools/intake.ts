@@ -10,8 +10,8 @@ import {
   markIntakePlanned,
   restoreIntakeItem,
   updateIntakeItem
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 import { attachmentsByItem } from '../attachments'
 import { asJson, pageEnvelope, pageInputs } from './index'
@@ -86,7 +86,7 @@ export function registerIntakeTools(server: McpServer, db: Database) {
     'mark_inbox_planned',
     {
       description:
-        'Record the keys of the cards an inbox demand became (e.g. CO-12, CO-13), marking it planned. Call after a demand has been planned into cards. Calling it again on a PLANNED demand REPLACES the whole set — that is how a planning that pointed at the wrong card or missed one is corrected. On an ARCHIVED demand call restore_inbox first: this tool would leave it planned yet still stamped as archived, with its images unlinked.',
+        'Record the keys of the cards an inbox demand became (e.g. AB-12, AB-13), marking it planned. Call after a demand has been planned into cards. Calling it again on a PLANNED demand REPLACES the whole set — that is how a planning that pointed at the wrong card or missed one is corrected. On an ARCHIVED demand call restore_inbox first: this tool would leave it planned yet still stamped as archived, with its images unlinked.',
       inputSchema: {
         id: z.string(),
         cardKeys: z.array(z.string()).min(1)

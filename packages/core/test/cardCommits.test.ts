@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { WORKING_TREE_SHA } from '@claude-organizer/shared'
+import { WORKING_TREE_SHA } from '@agents-board/shared'
 
 import { attachCardCommit, createCard, listCardCommits } from '../src/index'
 import { freshProject, uniqueKeyPrefix, useTestDb } from './helpers'

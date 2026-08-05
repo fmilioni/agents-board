@@ -5,8 +5,8 @@ import {
   exportProject,
   importBackup,
   serializeBackup
-} from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
+} from '@agents-board/core'
+import type { Database } from '@agents-board/db'
 
 // A full export gzips small, but `card_commits.diff` can push it past Fastify's
 // 1MB default; size the upload ceiling for real backups.

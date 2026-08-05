@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 
-import { type Database, schema } from '@claude-organizer/db'
+import { type Database, schema } from '@agents-board/db'
 
 import { InputError } from './errors'
 import { notify } from './events'

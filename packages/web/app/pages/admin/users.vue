@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AdminUser, UserRole } from '@claude-organizer/shared'
+import type { AdminUser, UserRole } from '@agents-board/shared'
 
 import { useProjectStore } from '~/stores/project'
 

@@ -1,9 +1,9 @@
 import type { FastifyRequest } from 'fastify'
 import sharp from 'sharp'
 
-import { createAttachment, InputError } from '@claude-organizer/core'
-import type { Database } from '@claude-organizer/db'
-import { ATTACHMENT_MIME_TYPES } from '@claude-organizer/shared'
+import { createAttachment, InputError } from '@agents-board/core'
+import type { Database } from '@agents-board/db'
+import { ATTACHMENT_MIME_TYPES } from '@agents-board/shared'
 
 // Accept ceiling before optimization; the route's multipart fileSize limit
 // mirrors the elevated bodyLimit the backup import uses.

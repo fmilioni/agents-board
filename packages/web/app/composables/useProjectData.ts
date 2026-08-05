@@ -2,6 +2,8 @@ import { type MaybeRefOrGetter, toValue, watch, type WatchSource } from 'vue'
 
 import type { AbSocketMessage } from '@agents-board/shared'
 
+import { useProjectStore } from '~/stores/project'
+
 interface UseProjectDataOptions {
   /**
    * Reactive source(s) whose change re-runs `load` (and which run it once on
@@ -37,5 +39,16 @@ export function useProjectData(
     { immediate: true }
   )
 
-  if (options.onEvent) useProjectEvents(projectId, options.onEvent)
+  if (options.onEvent) {
+    const projectStore = useProjectStore()
+    useProjectEvents(projectId, async (event) => {
+      if (
+        event.type === 'project.changed'
+        || event.type === 'project.deleted'
+      ) {
+        await projectStore.loadAndRepoint()
+      }
+      options.onEvent?.(event)
+    })
+  }
 }

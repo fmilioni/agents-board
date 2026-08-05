@@ -31,7 +31,7 @@ useProjectData(currentProjectId, refreshProjectLists, {
       event.type === 'project.changed'
       || event.type === 'project.deleted'
     ) {
-      refreshProjectLists()
+      loadArchivedProjects()
     }
   }
 })

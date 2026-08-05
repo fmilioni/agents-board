@@ -14,6 +14,7 @@
     "dev": "tsx watch --env-file=../../.env src/server.ts",
     "start": "tsx --env-file=../../.env src/server.ts",
     "build": "tsup",
+    "test": "tsx --test test/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"

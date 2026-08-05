@@ -38,15 +38,16 @@ export function registerTools(
 }
 
 export function asJson(value: unknown) {
-  // Compact (no indent): the agent parses JSON regardless of whitespace, and
-  // pretty-printing inflated every response's tokens for nothing.
+  const text = JSON.stringify(value)
+  if (text === undefined) throw new TypeError('MCP tool result must be JSON-serializable')
   return {
     content: [
       {
         type: 'text' as const,
-        text: JSON.stringify(value)
+        text
       }
-    ]
+    ],
+    structuredContent: { value: JSON.parse(text) }
   }
 }
 

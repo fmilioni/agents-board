@@ -1,5 +1,7 @@
 import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types.js'
 
+import { outputSchemaFor } from './output-schemas'
+
 type ToolContract = {
   title: string
   annotations: Required<
@@ -125,6 +127,7 @@ export function withToolContract(
 
   return {
     ...config,
-    ...contract
+    ...contract,
+    outputSchema: outputSchemaFor(name as keyof typeof toolContracts)
   }
 }

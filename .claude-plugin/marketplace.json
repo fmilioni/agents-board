@@ -10,7 +10,7 @@
       "name": "agents-board",
       "description": "Plan and execute coding work through the Agents Board MCP project board.",
       "version": "0.36.0",
-      "source": "./plugins/agents-board",
+      "source": "./plugins/claude-code/agents-board",
       "category": "productivity"
     }
   ]

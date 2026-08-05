@@ -6,7 +6,7 @@
 
 Agents Board gives Codex and Claude Code a real project-management system — cards, sprints, comments and docs — as **queryable state over MCP**, instead of spec Markdown files that grow without bound and go stale. A clean Nuxt UI mirrors the same board for humans, in real time.
 
-It ships with plugin packages for **Codex and Claude Code** (three user-facing skills, an internal reviewer skill, and the MCP server), backed by a pnpm monorepo you run with Docker. Install it from your client's repository marketplace and the skills and local MCP connection become available together.
+It ships separate plugin packages for **Codex and Claude Code**, each with host-native skills, review orchestration, and an MCP connection. Install it from your client's repository marketplace and the matching package becomes available together with the local MCP connection.
 
 <br/>
 
@@ -94,7 +94,7 @@ Export a backup from the Claude Organizer UI, then import it from the Agents Boa
 
 ### 2. Install the plugin for your coding agent
 
-The plugin delivers the **skills** *and* registers the **MCP** for both supported clients.
+Each client has its own plugin package. Both deliver the **skills** *and* register the **MCP** without sharing host-specific workflow files.
 
 #### Codex
 

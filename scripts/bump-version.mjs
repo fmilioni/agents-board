@@ -59,8 +59,8 @@ for (const name of readdirSync(join(root, 'packages'))) {
 }
 
 // Plugin manifests.
-patchJson('plugins/agents-board/.claude-plugin/plugin.json', setVersion)
-patchJson('plugins/agents-board/.codex-plugin/plugin.json', setVersion)
+patchJson('plugins/claude-code/agents-board/.claude-plugin/plugin.json', setVersion)
+patchJson('plugins/codex/agents-board/.codex-plugin/plugin.json', setVersion)
 patchJson('.claude-plugin/marketplace.json', (data) => {
   for (const plugin of data.plugins ?? []) plugin.version = version
 })

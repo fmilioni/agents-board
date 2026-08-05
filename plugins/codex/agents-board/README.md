@@ -4,8 +4,8 @@ The Codex package bundles three user-facing workflows, one internal review skill
 
 - **`$agents-board`** — orient on the board, resolve the repository binding, and route to the right workflow.
 - **`$plan`** — turn a new demand into sprints, stories, and tasks.
-- **`$implement`** — execute existing cards through their required lifecycle.
-- **`$reviewer`** — internal, explicit-only review protocol loaded by a fresh read-only subagent from `$implement`.
+- **`$implement`** — execute existing cards in guided or autopilot mode, with isolated worktrees for parallel units.
+- **`$reviewer`** — internal, explicit-only review protocol loaded by a fresh read-only subagent for standalone cards, selected risky story children, and complete stories.
 
 ## Installation
 

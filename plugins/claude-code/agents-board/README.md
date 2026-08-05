@@ -4,8 +4,8 @@ Three skills and one reviewer agent:
 
 - **`agents-board`** — how to **operate** the board: orient at the start of a session, keep statuses honest, comment with signal (not noise), docs.
 - **`plan`** — turn a **new demand** into sprints/histories/tasks. Triggers automatically when you describe something to build.
-- **`implement`** — **execute** a card that already exists, through a mandatory lifecycle (`in_progress` → read comments → implement → review → commit → done). Triggers when you start building a specific card.
-- **`agents-board:reviewer`** — the Claude Code **agent** that runs the mandatory review gate before work closes. It is dispatched by `implement`, not invoked as a user-facing skill.
+- **`implement`** — **execute** existing cards through a guided or autopilot lifecycle. Standalone cards get a fresh-agent review; story children normally share one story-level review, with discretionary earlier passes for risky work. Autopilot delegates isolated units through worktrees and integrates them centrally. Triggers when you start building a specific card.
+- **`agents-board:reviewer`** — the Claude Code **agent** used for required standalone, discretionary per-card, and complete story reviews. It may be dispatched by an autopilot executor or by the orchestrator fallback, never as a user-facing skill.
 
 The "never assume — resolve open decisions" doctrine is carried inline in each skill that uses it (`plan` and `implement`).
 

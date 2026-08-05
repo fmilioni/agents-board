@@ -34,7 +34,7 @@ Only create the inbox item when nothing already covers it. When the check matche
 ## The skills — pick by what the user asks
 
 - **`$plan`** — a **new demand** (feature, change, fix) to break into work. Turns it into sprints/stories/tasks. **All card creation goes through here** — never `create_card` ad-hoc.
-- **`$implement`** — **execute a card that already exists** (a task, a story, or a sprint's cards). Owns the per-card lifecycle and fires a fresh-subagent review before each card is committed.
+- **`$implement`** — **execute a card that already exists** (a task, a story, or a sprint's cards). Runs guided or autopilot execution: standalone cards get a fresh-subagent review, story children normally share a story-level review, and isolated units may run concurrently in worktrees.
 
 ## Find the project — binding first, `list_projects` only if missing
 

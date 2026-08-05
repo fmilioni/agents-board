@@ -2,7 +2,7 @@
   "name": "agents-board",
   "displayName": "Agents Board",
   "description": "Project management for AI coding agents over MCP. Ships the board skills and registers the MCP connection automatically.",
-  "version": "0.35.1",
+  "version": "0.36.0",
   "author": {
     "name": "Felipe Milioni"
   },

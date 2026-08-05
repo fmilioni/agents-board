@@ -40,8 +40,8 @@ Only create the inbox item when nothing already covers it. When the check matche
 
 Every tool takes an explicit `projectId`. Get it without scanning:
 
-1. **Check `.agents-board.local.md` first, then `AGENTS.md`** for the board binding (`projectId`, `keyPrefix`, `slug`, auth flag). For compatibility, also accept an existing `CLAUDE.local.md` or `CLAUDE.md` binding as legacy input. If a binding exists, use the `projectId` directly — **don't call `list_projects`**.
-2. **Only if no binding exists**, call `list_projects`, match the project whose `slug` fits this repo, then **write the binding in the neutral/Codex-first location** (next section). If none matches, ask the user before creating one.
+1. **Check `.agents-board.local.md` first, then `AGENTS.md`** for the board binding (`projectId`, `keyPrefix`, `slug`, auth flag). Also accept an existing host-specific binding in `CLAUDE.local.md` or `CLAUDE.md`. If a binding exists, use the `projectId` directly — **don't call `list_projects`**.
+2. **Only if no binding exists**, call `list_projects`, match the project whose `slug` fits this repo, then **write the binding in the shared host-neutral location** (next section). If none matches, ask the user before creating one.
 
 **Multiple hosts:** you may have more than one Agents Board host connected at once — each has its own tools and projects. Run the lookup on the **right host** (the one whose project `slug` matches this repo) and never mix hosts in a single operation; do not depend on a fixed tool prefix. If unsure which host a repo belongs to, ask.
 
@@ -49,7 +49,7 @@ Every tool takes an explicit `projectId`. Get it without scanning:
 
 When you had to discover the project (no binding found), persist it so it never needs discovery again. Write a stanza with: **`slug`**, **`keyPrefix`** (cards are `<KEY>-N`), **`projectId`**, and the **auth (diff-capture) flag**.
 
-- **Which file:** a binding safe to share with the repository → `AGENTS.md` (committed). A personal, open-source, or multi-board binding that must stay local → `.agents-board.local.md` (gitignored). Treat `CLAUDE.md` and `CLAUDE.local.md` as read-only legacy binding locations; write new bindings to the neutral/Codex-first files. When ambiguous, ask.
+- **Which file:** a binding safe to share with the repository → `AGENTS.md` (committed). A personal, open-source, or multi-board binding that must stay local → `.agents-board.local.md` (gitignored). Treat `CLAUDE.md` and `CLAUDE.local.md` as read-only compatibility locations; write new bindings to the shared host-neutral files. When ambiguous, ask.
 
 ## Auth flag — record ON the first time an attach fails
 

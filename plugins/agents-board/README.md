@@ -1,6 +1,6 @@
 # agents-board plugin
 
-Agents Board is Codex-first and keeps a compatible Claude Code package. It bundles three user-facing workflows, one internal review protocol, and an MCP connection:
+Agents Board supports Codex and Claude Code as first-class clients. It bundles three user-facing workflows, one internal review protocol, and an MCP connection:
 
 - **`$agents-board`** — orient on the board, resolve the repository binding, and route to the right workflow.
 - **`$plan`** — turn a new demand into sprints, stories, and tasks.
@@ -35,13 +35,13 @@ codex mcp add agents-board-remote --url https://mcp.example.com/mcp
 
 Use a server name other than `agents-board`; that name belongs to the bundled local connection. Each host keeps its own OAuth session and projects, and the skills must never mix entities from different hosts.
 
-## Claude Code compatibility
+## Claude Code installation
 
-The legacy manifest and MCP configuration remain in the same plugin directory. Install them through Claude Code's marketplace:
+The Claude Code manifest and MCP configuration live in the same plugin directory. Install them through Claude Code's marketplace:
 
 ```text
 /plugin marketplace add fmilioni/agents-board
 /plugin install agents-board@agents-board
 ```
 
-For local development, `claude --plugin-dir plugins/agents-board` remains supported. Claude Code can still override its bundled MCP URL with `AB_MCP_URL`; that override is specific to the legacy `.mcp.json` path and does not change the Codex plugin's fixed local connection.
+For local development, use `claude --plugin-dir plugins/agents-board`. Claude Code can override its bundled MCP URL with `AB_MCP_URL`; that override is specific to its `.mcp.json` path and does not change the Codex plugin's fixed local connection.

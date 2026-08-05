@@ -2,11 +2,11 @@
 
 # Agents Board
 
-### A "Jira" for Codex — your agent's project board, exposed over MCP.
+### A project board for coding agents, shared over MCP.
 
-Agents Board gives Codex a real project-management system — cards, sprints, comments and docs — as **queryable state over MCP**, instead of spec Markdown files that grow without bound and go stale. A clean Nuxt UI mirrors the same board for humans, in real time.
+Agents Board gives Codex and Claude Code a real project-management system — cards, sprints, comments and docs — as **queryable state over MCP**, instead of spec Markdown files that grow without bound and go stale. A clean Nuxt UI mirrors the same board for humans, in real time.
 
-It ships as a **Codex plugin** (three user-facing skills, an internal reviewer skill, and the MCP server), backed by a pnpm monorepo you run with Docker. Install it once from the repository marketplace and the skills and local MCP connection become available together.
+It ships with plugin packages for **Codex and Claude Code** (three user-facing skills, an internal reviewer skill, and the MCP server), backed by a pnpm monorepo you run with Docker. Install it from your client's repository marketplace and the skills and local MCP connection become available together.
 
 <br/>
 
@@ -19,7 +19,7 @@ It ships as a **Codex plugin** (three user-facing skills, an internal reviewer s
 </div>
 
 > [!WARNING]
-> **Early stage — not yet stable.** Agents Board is under active development and not production-stable yet. Right now we're focused on **stabilizing the skills** (the `plan` / `implement` workflow the agent runs), so their behavior and the tool surface may still change between versions. Expect breaking changes and upgrade the plugin deliberately through Codex's `/plugins` browser or CLI.
+> **Early stage — not yet stable.** Agents Board is under active development and not production-stable yet. Right now we're focused on **stabilizing the skills** (the `plan` / `implement` workflow the agent runs), so their behavior and the tool surface may still change between versions. Expect breaking changes and upgrade the plugin deliberately through Codex's `/plugins` browser or CLI, or through Claude Code's plugin marketplace.
 
 ---
 
@@ -76,9 +76,9 @@ docker compose up -d --build
 `cp .env.example .env` already ships working defaults for local Docker; the values worth knowing:
 
 ```bash
-POSTGRES_USER=organizer
-POSTGRES_PASSWORD=organizer
-AB_POSTGRES_DB=agents_board
+POSTGRES_USER=agents_board
+POSTGRES_PASSWORD=agents_board
+POSTGRES_DB=agents_board
 POSTGRES_PORT=5544                       # host port (in-container is 5432)
 API_PORT=4400
 NUXT_PUBLIC_API_URL=http://127.0.0.1:4400
@@ -86,55 +86,19 @@ NUXT_PUBLIC_API_URL=http://127.0.0.1:4400
 # MCP_PUBLIC_URL=http://127.0.0.1:4402    # public URL clients reach the MCP at
 ```
 
-Migrations run automatically before the API and MCP start, and a one-shot `backfill` then (re)builds the semantic-search vectors for any content missing them. The embedding model loads in its own `embedding` service; the API and MCP call it over HTTP and fall back to lexical search if it's down. Postgres data persists under `./docker/data/postgres`. Out of the box the board is **open** (no login) — see [Authentication](#authentication) to turn sign-in on.
+Migrations run automatically before the API and MCP start, and a one-shot `backfill` then (re)builds the semantic-search vectors for any content missing them. The embedding model loads in its own `embedding` service; the API and MCP call it over HTTP and fall back to lexical search if it's down. Postgres data persists under `./docker/data/agents-board-postgres`. Out of the box the board is **open** (no login) — see [Authentication](#authentication) to turn sign-in on.
 
 #### Upgrade from Claude Organizer
 
-The Compose project, images, containers, and default database now use the Agents Board identity. Stop the old Compose project before the first upgrade so its containers release the local ports, then start the new stack:
+Export a backup from the Claude Organizer UI, then import it from the Agents Board UI. There is no automatic database migration between the two projects.
 
-```bash
-docker compose -p claude-organizer down
-docker compose up -d --build
-```
+### 2. Install the plugin for your coding agent
 
-The `database-rename` one-shot service detects the former default `organizer` database and renames it to `agents_board` before application migrations run. The operation is idempotent and preserves the existing Postgres data directory. Existing local-development environments should also replace `POSTGRES_DB=organizer` with `AB_POSTGRES_DB=agents_board` and update `DATABASE_URL` to end in `/agents_board`. Custom database names are never renamed automatically; set `AB_POSTGRES_DB` and `DATABASE_URL` explicitly for those deployments.
+The plugin delivers the **skills** *and* registers the **MCP** for both supported clients.
 
-Take a database backup before upgrading. To roll this identity-only release back, stop the new stack, start only its Postgres service, rename the database back, and then start the previous release with its former environment values:
+#### Codex
 
-```bash
-docker compose down
-docker compose up -d postgres
-docker compose exec -T postgres psql -U organizer -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'agents_board' AND pid <> pg_backend_pid()"
-docker compose exec -T postgres psql -U organizer -d postgres -c "ALTER DATABASE agents_board RENAME TO organizer"
-docker compose down
-git checkout <previous-release>
-docker compose -p claude-organizer up -d --build
-```
-
-Restore the backup instead when rolling back across any release that also contains incompatible schema migrations.
-
-Production deployments must keep the production overlay in every lifecycle command. Upgrade with:
-
-```bash
-docker compose -p claude-organizer -f docker-compose.yml -f docker-compose.prod.yml down
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-```
-
-For a production rollback, use the same overlay while renaming the database and when starting the previous release:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml down
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d postgres
-docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres psql -U organizer -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'agents_board' AND pid <> pg_backend_pid()"
-docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres psql -U organizer -d postgres -c "ALTER DATABASE agents_board RENAME TO organizer"
-docker compose -f docker-compose.yml -f docker-compose.prod.yml down
-git checkout <previous-release>
-docker compose -p claude-organizer -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-```
-
-### 2. Install the plugin
-
-The plugin delivers the **skills** *and* registers the **MCP**. Add this repository as a Codex marketplace, then install its plugin:
+Add this repository as a Codex marketplace, then install its plugin:
 
 ```bash
 codex plugin marketplace add fmilioni/agents-board
@@ -142,6 +106,17 @@ codex plugin add agents-board@agents-board
 ```
 
 You can inspect or manage it interactively with `/plugins` in Codex CLI. Start a new Codex task after installation so its bundled skills and tools are loaded. The `agents-board` tools point at local Docker (`http://127.0.0.1:4402/mcp`) by default.
+
+#### Claude Code
+
+Add the same repository through Claude Code's marketplace and install the plugin:
+
+```text
+/plugin marketplace add fmilioni/agents-board
+/plugin install agents-board@agents-board
+```
+
+Start a new Claude Code session after installation. The tracked `CLAUDE.md` forwards to the shared `AGENTS.md`, so both clients follow the same repository rules and workflows.
 
 ### 3. Configure the MCP for a remote host
 
@@ -184,10 +159,6 @@ Pass it your intent in plain language (any language) and it picks the right work
 
 For a multi-card run, `implement` asks how to drive it: **review each card** (stop for your validation between cards) or **run it all at once** (execute the batch autonomously). In both modes it commits one-per-card on the git flow you agree, runs the review gate (and a story-level review when a story's last child finishes), and leaves each card in `review` for your final validation — it never merges on its own (no PR unless you ask). The review itself runs in a read-only **`reviewer`** subagent dispatched by `implement`.
 
-### Claude Code compatibility
-
-Claude Code remains supported as a legacy client through the same repository: add it with `/plugin marketplace add fmilioni/agents-board`, then `/plugin install agents-board@agents-board`. The tracked `CLAUDE.md` forwards to the shared `AGENTS.md`, so both hosts follow the same repository rules.
-
 ### Inbox
 
 Got an idea mid-flight but don't want to plan it yet? Drop it in the **inbox** — a one-line demand captured without breaking it into cards. The agent reads pending inbox items when it orients and offers to plan them; the `plan` skill turns a demand into the right sprint/stories/tasks and marks it planned. It keeps raw intake out of the board until it's actually structured work.
@@ -198,7 +169,7 @@ Auth is built on [better-auth](https://better-auth.com) and is **off by default*
 
 - **Methods** — email+password is the zero-config base; **GitHub OAuth** is optional and only appears when `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` are set (callback `https://api.<domain>/api/auth/callback/github`). No host is forced to register an OAuth app.
 - **Access** — users get **roles** and **per-project access**; admins manage who can see what.
-- **MCP** — with auth on, `/mcp` is an OAuth 2.1 resource server and the Codex MCP client obtains a bearer automatically. With auth off, `/mcp` is open, mirroring the open board.
+- **MCP** — with auth on, `/mcp` is an OAuth 2.1 resource server and compatible MCP clients obtain a bearer automatically. With auth off, `/mcp` is open, mirroring the open board.
 
 Relevant env (see `.env.example`):
 
@@ -226,17 +197,17 @@ Point DNS for the three subdomains at the host; Caddy issues/renews TLS (ACME). 
 
 ### Signing in from a terminal-only box (WSL, SSH, headless)
 
-With auth on, Codex runs the OAuth flow by opening a browser and waiting on a **local loopback callback** (`http://localhost:<random-port>/…`). In a terminal-only environment that stalls — no browser opens (Codex prints the URL instead — open it yourself), and the loopback redirect must be able to reach back into the box (WSL2 forwards `localhost` by default; over SSH, forward the port with `ssh -L <port>:localhost:<port> …`). Keep one host throughout — don't mix `localhost` and `127.0.0.1`, or the login won't stick.
+With auth on, the MCP client runs the OAuth flow by opening a browser and waiting on a **local loopback callback** (`http://localhost:<random-port>/…`). In a terminal-only environment that stalls — no browser opens (the client prints the URL instead — open it yourself), and the loopback redirect must be able to reach back into the box (WSL2 forwards `localhost` by default; over SSH, forward the port with `ssh -L <port>:localhost:<port> …`). Keep one host throughout — don't mix `localhost` and `127.0.0.1`, or the login won't stick.
 
 **The reliable escape hatch:** auth is **off by default** and an open board needs no login at all. For a local/WSL dev box, leave auth off and skip the loopback flow entirely; turn auth on where a browser-reachable login exists — e.g. a remote deployment behind the reverse proxy, reached over normal `https://`. The loopback dance depends on the MCP client and your box's networking; Agents Board is a standard OAuth 2.1 resource server and can't shortcut it server-side.
 
 ## Architecture
 
 ```text
-Codex ───────HTTP──▶ MCP (:4402/mcp) ──┐
-                                       ├─▶ core ──▶ Postgres 16
-Browser (SPA) ──HTTP──▶ API (:4400) ───┘   (+ WebSocket /ws for real-time)
-                            └─ core ──HTTP──▶ Embedding service (:4403) ──▶ model
+Coding agent ─HTTP──▶ MCP (:4402/mcp) ──┐
+                                        ├─▶ core ──▶ Postgres 16
+Browser (SPA) ──HTTP──▶ API (:4400) ────┘   (+ WebSocket /ws for real-time)
+                             └─ core ──HTTP──▶ Embedding service (:4403) ──▶ model
 ```
 
 A pnpm monorepo under `packages/`:

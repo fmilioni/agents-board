@@ -1,6 +1,6 @@
 # Agents Board
 
-"Jira for Codex": project management exposed over MCP. Codex uses the system to organize its own development (auto-inception). **International** product.
+Project management for coding agents, exposed over MCP. Codex and Claude Code can use the system to organize their own development (auto-inception). **International** product.
 
 ## Skills
 
@@ -16,7 +16,7 @@ Let the skills drive. **What** to do (active sprint, cards, backlog, comments, d
 
 ### Bind this repo to your board (local, not committed)
 
-This is an **open-source** repo — every clone tracks its own work on its **own Agents Board instance**, so the project↔MCP binding is deliberately **not** committed here. Put yours in a gitignored `.agents-board.local.md` at the repo root. Codex must read it when it exists. For example:
+This is an **open-source** repo — every clone tracks its own work on its **own Agents Board instance**, so the project↔MCP binding is deliberately **not** committed here. Put yours in a gitignored `.agents-board.local.md` at the repo root. The coding agent must read it when it exists. For example:
 
 ```md
 This project in the MCP:

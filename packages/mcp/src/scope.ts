@@ -25,9 +25,11 @@ export interface McpScope {
 const ADMIN_ONLY_TOOLS = new Set([
   'create_project',
   'update_project',
+  'update_project_key_prefix',
   'archive_project',
   'restore_project',
-  'destroy_project'
+  'destroy_project',
+  'set_project_repo'
 ])
 
 export async function resolveMcpScope(
@@ -57,9 +59,117 @@ export async function resolveMcpScope(
 
 type Input = Record<string, unknown>
 type EntityKind = Parameters<typeof resolveEntityProjectId>[1]
+type ToolScopeMapping
+  = | 'blockerCards'
+    | 'cardAndSprint'
+    | 'cardId'
+    | 'cardIdField'
+    | 'cardKey'
+    | 'cardKeyField'
+    | 'cardRefs'
+    | 'cards'
+    | 'commentId'
+    | 'commentIds'
+    | 'commit'
+    | 'docId'
+    | 'inboxId'
+    | 'projectId'
+    | 'projectSlug'
+    | 'sprintId'
+    | 'tagId'
+    | 'writeDoc'
 
 function str(v: unknown): string | undefined {
   return typeof v === 'string' ? v : undefined
+}
+
+function toolScopeMapping(tool: string): ToolScopeMapping | null {
+  switch (tool) {
+    case 'list_cards':
+    case 'search_cards':
+    case 'create_card':
+    case 'list_sprints':
+    case 'get_active_sprint':
+    case 'create_sprint':
+    case 'list_tags':
+    case 'create_tag':
+    case 'list_docs':
+    case 'search_docs':
+    case 'list_unhandled_comments':
+    case 'create_inbox':
+    case 'list_inbox':
+    case 'issue_upload_token':
+      return 'projectId'
+    case 'get_project':
+      return 'projectSlug'
+    case 'get_card':
+    case 'update_card':
+    case 'set_card_status':
+    case 'move_card_to_backlog':
+    case 'archive_card':
+    case 'restore_card':
+    case 'destroy_card':
+      return 'cardId'
+    case 'get_card_by_key':
+      return 'cardKey'
+    case 'issue_commit_token':
+    case 'claim_task':
+    case 'release_task':
+    case 'take_over_task':
+      return 'cardKeyField'
+    case 'get_cards':
+      return 'cardRefs'
+    case 'move_card_to_sprint':
+      return 'cardAndSprint'
+    case 'list_comments':
+    case 'add_comment':
+    case 'add_tag_to_card':
+    case 'remove_tag_from_card':
+      return 'cardIdField'
+    case 'add_blocker':
+    case 'remove_blocker':
+      return 'blockerCards'
+    case 'reorder_cards':
+      return 'cards'
+    case 'update_sprint':
+    case 'start_sprint':
+    case 'complete_sprint':
+    case 'deactivate_sprint':
+    case 'reopen_sprint':
+    case 'archive_sprint':
+    case 'restore_sprint':
+    case 'destroy_sprint':
+      return 'sprintId'
+    case 'read_doc':
+    case 'archive_doc':
+    case 'restore_doc':
+    case 'destroy_doc':
+      return 'docId'
+    case 'write_doc':
+      return 'writeDoc'
+    case 'update_tag':
+    case 'delete_tag':
+      return 'tagId'
+    case 'update_comment':
+    case 'delete_comment':
+      return 'commentId'
+    case 'mark_comments_handled':
+      return 'commentIds'
+    case 'update_inbox':
+    case 'mark_inbox_planned':
+    case 'archive_inbox':
+    case 'restore_inbox':
+    case 'destroy_inbox':
+      return 'inboxId'
+    case 'get_commit_diff':
+      return 'commit'
+    default:
+      return null
+  }
+}
+
+export function hasToolScopeMapping(tool: string) {
+  return toolScopeMapping(tool) !== null
 }
 
 // The project ids a tool call touches, or null when none resolves (deny). Maps
@@ -75,47 +185,30 @@ async function resolveToolProjectIds(
     id ? resolveEntityProjectId(db, kind, id).then(one) : null
   const nonEmpty = (ids: string[]) => (ids.length > 0 ? ids : null)
 
-  switch (tool) {
-    case 'list_cards':
-    case 'search_cards':
-    case 'create_card':
-    case 'list_sprints':
-    case 'get_active_sprint':
-    case 'create_sprint':
-    case 'list_tags':
-    case 'create_tag':
-    case 'list_docs':
-    case 'search_docs':
-    case 'list_unhandled_comments':
-    case 'create_inbox':
-    case 'list_inbox':
-    case 'update_project_key_prefix':
-    case 'set_project_repo':
-    case 'issue_upload_token':
+  switch (toolScopeMapping(tool)) {
+    case 'projectId':
       return one(str(input.projectId))
-
-    case 'get_project':
+    case 'projectSlug':
       return one((await getProjectBySlug(db, str(input.slug) ?? ''))?.id)
-
-    case 'get_card':
-    case 'update_card':
-    case 'set_card_status':
-    case 'move_card_to_backlog':
-    case 'archive_card':
-    case 'restore_card':
-    case 'destroy_card':
+    case 'cardId':
       return entity('card', str(input.id))
-
-    case 'get_card_by_key':
+    case 'cardKey':
       return entity('cardKey', str(input.key))
-
-    case 'issue_commit_token':
-    case 'claim_task':
-    case 'release_task':
-    case 'take_over_task':
+    case 'cardKeyField':
       return entity('cardKey', str(input.cardKey))
-
-    case 'move_card_to_sprint': {
+    case 'cardRefs': {
+      const ids = await Promise.all(
+        ((input.ids as string[] | undefined) ?? []).map(ref =>
+          resolveEntityProjectId(
+            db,
+            ref.startsWith('crd_') ? 'card' : 'cardKey',
+            ref
+          )
+        )
+      )
+      return nonEmpty(ids.filter((id): id is string => Boolean(id)))
+    }
+    case 'cardAndSprint': {
       const ids = (
         await Promise.all([
           resolveEntityProjectId(db, 'card', str(input.id) ?? ''),
@@ -124,77 +217,45 @@ async function resolveToolProjectIds(
       ).filter((x): x is string => Boolean(x))
       return nonEmpty(ids)
     }
-
-    case 'list_comments':
-    case 'add_comment':
-    case 'add_tag_to_card':
-    case 'remove_tag_from_card':
+    case 'cardIdField':
       return entity('card', str(input.cardId))
-
-    case 'add_blocker':
-    case 'remove_blocker':
+    case 'blockerCards':
       return resolveCardsProjectIds(
         db,
         [str(input.cardId), str(input.blockerId)].filter(
           (x): x is string => Boolean(x)
         )
       ).then(nonEmpty)
-
-    case 'reorder_cards':
+    case 'cards':
       return resolveCardsProjectIds(
         db,
         ((input.orderedIds as string[] | undefined) ?? []).filter(Boolean)
       ).then(nonEmpty)
-
-    case 'update_sprint':
-    case 'archive_sprint':
-    case 'restore_sprint':
-    case 'destroy_sprint':
+    case 'sprintId':
       return entity('sprint', str(input.id))
-
-    case 'start_sprint':
-    case 'complete_sprint':
-    case 'reopen_sprint':
-      return entity('sprint', str(input.sprintId))
-
-    case 'read_doc':
-    case 'archive_doc':
-    case 'restore_doc':
-    case 'destroy_doc':
+    case 'docId':
       return entity('doc', str(input.id))
-
-    case 'write_doc':
+    case 'writeDoc':
       return input.id
         ? entity('doc', str(input.id))
         : one(str(input.projectId))
-
-    case 'update_tag':
+    case 'tagId':
       return entity('tag', str(input.id))
-
-    case 'update_comment':
-    case 'delete_comment':
+    case 'commentId':
       return entity('comment', str(input.id))
-
-    case 'mark_comments_handled':
+    case 'commentIds':
       return resolveCommentsProjectIds(
         db,
         ((input.commentIds as string[] | undefined) ?? []).filter(Boolean)
       ).then(nonEmpty)
-
-    case 'update_inbox':
-    case 'mark_inbox_planned':
-    case 'archive_inbox':
-    case 'restore_inbox':
-    case 'destroy_inbox':
+    case 'inboxId':
       return entity('intakeItem', str(input.id))
-
-    case 'get_commit_diff': {
+    case 'commit': {
       const cardId
         = str(input.cardId)
           ?? (await getCommitBySha(db, str(input.sha) ?? ''))?.cardId
       return entity('card', cardId)
     }
-
     default:
       return null
   }
@@ -220,8 +281,11 @@ export async function assertToolAccess(
     }
     return
   }
-  if (scope.projects === 'all') return
   if (tool === 'list_projects') return
+  if (!hasToolScopeMapping(tool)) {
+    throw new Error(`Forbidden: no accessible project resolves for ${tool}.`)
+  }
+  if (scope.projects === 'all') return
 
   const projectIds = await resolveToolProjectIds(db, tool, input)
   if (!projectIds) {

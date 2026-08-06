@@ -1,16 +1,16 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "agents-board",
-  "description": "Agents Board workflows and MCP connection for AI coding agents.",
+  "description": "Agents Board project management and MCP connection for AI coding agents.",
   "owner": {
     "name": "Felipe Milioni"
   },
   "plugins": [
     {
       "name": "agents-board",
-      "description": "Plan and execute coding work through the Agents Board MCP project board.",
-      "version": "0.37.0",
-      "source": "./plugins/claude-code/agents-board",
+      "description": "Plan and track coding work through the Agents Board MCP project board.",
+      "version": "0.38.0",
+      "source": "./plugins/agents-board",
       "category": "productivity"
     }
   ]

@@ -1,6 +1,6 @@
 {
   "name": "agents-board",
-  "version": "0.37.0",
+  "version": "0.38.0",
   "description": "Project management for AI coding work through cards, sprints, roadmaps, and docs.",
   "author": {
     "name": "Felipe Milioni",

@@ -10,7 +10,7 @@ export function registerCommitTools(server: McpServer) {
     'issue_commit_token',
     {
       description:
-        'Mint a short-lived, card-scoped token that authenticates the diff-capture scripts (attach-commit / attach-worktree-diff) against the API when auth is on. The token only authorizes attaching/clearing the diff of THIS card and expires quickly; it cannot be reused for another card. The caller (the skill) exports it as AB_COMMIT_TOKEN so the script sends it in the X-AB-Commit-Token header. In sem-auth mode the scripts work without a token — minting is only needed when auth is enabled.',
+        'Mint a short-lived token for attach-commit or attach-worktree-diff when authentication is enabled. It authorizes diff operations for one card only. Pass it to the script as AB_COMMIT_TOKEN; no token is needed when authentication is disabled.',
       inputSchema: { cardKey: z.string() }
     },
     async ({ cardKey }) => {

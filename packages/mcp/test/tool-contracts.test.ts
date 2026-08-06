@@ -51,6 +51,26 @@ describe('MCP tool security metadata', () => {
     )
   })
 
+  it('keeps every tool description concise and self-contained', () => {
+    const registrations: Array<{ name: string, config: Record<string, unknown> }> = []
+    const server = {
+      registerTool(name: string, config: Record<string, unknown>) {
+        registrations.push({ name, config })
+      }
+    } as unknown as McpServer
+
+    registerTools(server, {} as Database, null)
+
+    for (const { name, config } of registrations) {
+      assert.equal(typeof config.description, 'string')
+      const description = config.description as string
+      assert.equal(description, description.trim())
+      assert.equal(description.includes('\n'), false)
+      assert.ok(description.length >= 30, `${name} description is too terse`)
+      assert.ok(description.length <= 400, `${name} description contains workflow-level detail`)
+    }
+  })
+
   it('requires update_project to identify a target and change its identity', () => {
     let inputSchema: z.ZodType | undefined
     const server = {

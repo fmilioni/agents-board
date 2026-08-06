@@ -25,7 +25,7 @@ export function registerCommentTools(server: McpServer, db: Database) {
     'list_comments',
     {
       description:
-        'List comments of a card. Reading the thread advances the user\'s unread comments to `read` (but not to `handled` — that\'s mark_comments_handled, which you call once you\'ve actually acted on a comment). Pages with limit/offset; response is { comments, hasMore, offset }.',
+        'List a card\'s comments and referenced attachments. This read advances returned user comments from unread to read, never to handled. Paginated response: { comments, hasMore, offset }.',
       inputSchema: {
         cardId: z.string(),
         ...pageInputs
@@ -56,7 +56,7 @@ export function registerCommentTools(server: McpServer, db: Database) {
     'list_unhandled_comments',
     {
       description:
-        'List all user comments not yet handled by the AI for a project (both `unread` and `read` — everything you haven\'t closed out with mark_comments_handled). The scan advances the returned `unread` comments to `read` (but not to `handled` — that\'s mark_comments_handled, which you call once you\'ve actually acted on a comment); already-`read` and `handled` comments are untouched, and the queue still returns `unread` + `read`. Pages with limit/offset; response is { comments, hasMore, offset }.',
+        'List project-wide user comments still awaiting action, including unread and read. Returned unread comments advance to read; handled comments are excluded. Paginated response: { comments, hasMore, offset }.',
       inputSchema: { projectId: z.string(), ...pageInputs }
     },
     async ({ projectId, limit, offset }) => {
@@ -72,7 +72,8 @@ export function registerCommentTools(server: McpServer, db: Database) {
   server.registerTool(
     'add_comment',
     {
-      description: 'Add a comment authored by the AI to a card.',
+      description:
+        'Add an agent-authored markdown comment to a card. Use comments for durable decisions, scope changes, findings, and review verification. A review test plan uses task-list steps: check only steps already verified, and leave pending user checks unchecked. Write in the user\'s language.',
       inputSchema: {
         cardId: z.string(),
         bodyMd: z.string().min(1)
@@ -86,7 +87,7 @@ export function registerCommentTools(server: McpServer, db: Database) {
     'update_comment',
     {
       description:
-        'Edit the body (markdown) of an existing comment. Preserves author, timestamp and order. To remove a comment instead, use delete_comment.',
+        'Replace an existing comment\'s markdown body while preserving its author, timestamp, and order.',
       inputSchema: { id: z.string(), bodyMd: z.string().min(1) }
     },
     async ({ id, bodyMd }) =>
@@ -97,7 +98,7 @@ export function registerCommentTools(server: McpServer, db: Database) {
     'mark_comments_handled',
     {
       description:
-        'Mark a list of comments as handled — use once you have actually acted on the comment (addressed the request, applied the fix, answered the question), not merely read it.',
+        'Mark comments handled after their requests were acted on. Reading alone is not handling. Returns the number updated.',
       inputSchema: { commentIds: z.array(z.string()).min(1) }
     },
     async ({ commentIds }) => {
@@ -109,7 +110,7 @@ export function registerCommentTools(server: McpServer, db: Database) {
   server.registerTool(
     'delete_comment',
     {
-      description: 'Delete a comment from a card by its id. Permanent.',
+      description: 'Permanently delete one comment by id.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(commentAck(await deleteComment(db, id)))

@@ -103,7 +103,7 @@ export function registerCardTools(server: McpServer, db: Database) {
     'list_cards',
     {
       description:
-        'List cards of a project, focused. Returns key/title/summary/status/etc but NOT descriptionMd (call get_card for full description). Filter by sprint, status (single OR a list), activeOnly (everything but done/backlog), tag, or backlog-only, and page with limit/offset. Defaults to limit 100 so a broad listing never blows the context. Response is { cards, hasMore, offset } — raise offset (or narrow the filter) to see the rest. Archived cards are hidden by default.',
+        'List card summaries for scanning; descriptionMd is omitted, so use get_card for full detail. Supports sprint, status, active, tag, backlog, and archive filters. Paginated response: { cards, hasMore, offset }.',
       inputSchema: {
         projectId: z.string(),
         sprintId: z.string().nullable().optional(),
@@ -139,7 +139,7 @@ export function registerCardTools(server: McpServer, db: Database) {
     'search_cards',
     {
       description:
-        'Hybrid semantic search over cards AND their comments: lexical full-text fused with embedding similarity by RRF, so it ranks by MEANING — a conceptual / natural-language query matches the right card even when the wording differs, and synonyms/typos still hit (falls back to lexical-only when embeddings are unavailable). Searches key/title/summary/description AND comment bodies — a card matches if the term hits the card OR any of its comments. Web-style queries (quoted phrases, OR, -exclude) and substring/trigram matching still work. Returns card summaries WITHOUT descriptionMd PLUS the matched comment snippet when the hit came from a comment — use get_card for the full detail. Accepts the focused-read filters (status/activeOnly, sprintId, tag) to search within a slice. Pages with limit/offset (default 25, max 100); response is { cards, hasMore, offset }. Read-only: never marks comments as read.',
+        'Search cards and comment bodies with hybrid lexical and semantic ranking; falls back to lexical search when embeddings are unavailable. Supports natural language, quoted phrases, OR, -exclude, and card filters. Returns summaries plus a matched-comment snippet, not descriptionMd. Paginated and read-only; it never changes comment read state.',
       inputSchema: {
         projectId: z.string(),
         query: z.string().min(1),
@@ -174,7 +174,7 @@ export function registerCardTools(server: McpServer, db: Database) {
     'get_card',
     {
       description:
-        'Get a single card by its internal id (crd_xxx) with full descriptionMd.',
+        'Get a full card by internal id, including descriptionMd, parent and subtasks, blockers, claim, commit metadata, and attachments. Commit diffs stay on demand; images open through attachment://<att_id>.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(await withCommitsAndAttachments(db, await getCard(db, id)))
@@ -184,7 +184,7 @@ export function registerCardTools(server: McpServer, db: Database) {
     'get_card_by_key',
     {
       description:
-        'Get a single card by its human-readable key (e.g. \'AB-12\') with full descriptionMd.',
+        'Get a full card by human-readable key, such as AB-12. Returns the same detail as get_card, including relationships, claim, commit metadata, and attachments.',
       inputSchema: { key: z.string() }
     },
     async ({ key }) => asJson(await withCommitsAndAttachments(db, await getCardByKey(db, key)))
@@ -194,7 +194,7 @@ export function registerCardTools(server: McpServer, db: Database) {
     'get_cards',
     {
       description:
-        'Batch-read full cards (WITH descriptionMd) by id (crd_xxx) and/or key (AB-12) in one call — the post-search companion to get_card when you need the detail of several hits at once. Mix ids and keys freely. Capped at 50 per call to keep the response bounded; pass offset to page when you have more than 50 refs.',
+        'Batch-read full cards by mixed internal ids and human-readable keys. Includes descriptionMd and is capped at 50 references per call; use offset for a larger input set.',
       inputSchema: {
         ids: z
           .array(z.string())
@@ -216,7 +216,7 @@ export function registerCardTools(server: McpServer, db: Database) {
     'get_commit_diff',
     {
       description:
-        'Get the stored diff of a commit attached to a card, by its sha (optionally narrowed by cardId). Use it when the commit is gone from local git (e.g. squashed on merge). Returns the commit metadata plus `diff`; `diff` is null when it was cleared on archive.',
+        'Get an attached commit\'s stored diff and metadata by SHA, optionally narrowed to one card. Useful when local git no longer has the commit; diff is null if archive cleanup removed it.',
       inputSchema: {
         sha: z.string(),
         cardId: z
@@ -232,7 +232,7 @@ export function registerCardTools(server: McpServer, db: Database) {
     'create_card',
     {
       description:
-        'Create a card in the backlog (default) or a specific sprint. `summary` (one short sentence, what the card is about — shown on the board and in list_cards) and `descriptionMd` (the full markdown body — objective, expected behavior, acceptance criteria) are BOTH REQUIRED; a blank/whitespace-only value is rejected. Pass `tagIds` to attach existing tags to the card at creation.',
+        'Create a card in the backlog or a sprint. summary and descriptionMd are required; the body should make the deliverable understandable without chat context and link existing docs instead of copying them. Acceptance criteria use plain bullets; task-list checkboxes are for executable QA or runbook steps. parentId creates a story child, and tagIds attach existing tags atomically.',
       inputSchema: {
         projectId: z.string(),
         sprintId: z.string().optional(),
@@ -282,7 +282,8 @@ export function registerCardTools(server: McpServer, db: Database) {
   server.registerTool(
     'update_card',
     {
-      description: 'Update fields of a card.',
+      description:
+        'Update only the supplied card fields. descriptionMd replaces the complete body, so send the full markdown; use comments for chronological discussion rather than partial body updates.',
       inputSchema: {
         id: z.string(),
         title: z.string().min(1).max(200).optional(),
@@ -317,7 +318,8 @@ export function registerCardTools(server: McpServer, db: Database) {
   server.registerTool(
     'set_card_status',
     {
-      description: 'Shortcut to change a card status.',
+      description:
+        'Change a card\'s board status. Work normally moves through in_progress and rests in review with verification guidance; use done only after user approval, and blocked for an external wait. The core does not derive a parent story\'s status, so re-check the parent after moving a child.',
       inputSchema: { id: z.string(), status: cardStatus }
     },
     async ({ id, status }) => asJson(cardAck(await updateCard(db, { id, status })))
@@ -327,7 +329,7 @@ export function registerCardTools(server: McpServer, db: Database) {
     'reorder_cards',
     {
       description:
-        'Persist the board order of cards in batch: writes position = index (0,1,2,…) for each id in `orderedIds`, in the given order. The board sorts by position ASC, so pass the cards in the order they should appear top-to-bottom. Mirrors the board drag-reorder; use it to order a set of cards programmatically (e.g. by execution order after planning).',
+        'Persist one board list or column order by assigning position from each id\'s array index. Send the complete top-to-bottom order: a partial list also starts at zero and can collide with omitted cards.',
       inputSchema: {
         orderedIds: z
           .array(z.string())
@@ -343,7 +345,7 @@ export function registerCardTools(server: McpServer, db: Database) {
   server.registerTool(
     'move_card_to_backlog',
     {
-      description: 'Remove a card from its current sprint (back to backlog).',
+      description: 'Detach a card from its sprint and return it to the project backlog.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(cardAck(await moveCardToBacklog(db, id), 'sprintId'))
@@ -352,7 +354,7 @@ export function registerCardTools(server: McpServer, db: Database) {
   server.registerTool(
     'move_card_to_sprint',
     {
-      description: 'Move a card to a specific sprint.',
+      description: 'Assign a card to a specific sprint without changing its status.',
       inputSchema: { id: z.string(), sprintId: z.string() }
     },
     async ({ id, sprintId }) =>
@@ -363,7 +365,7 @@ export function registerCardTools(server: McpServer, db: Database) {
     'archive_card',
     {
       description:
-        'Archive a card (soft-delete): it disappears from normal listings but is kept and can be restored. Shows up in list_cards with archivedOnly=true.',
+        'Archive a card reversibly. It disappears from normal listings and remains discoverable with archivedOnly for later restoration.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(cardAck(await archiveCard(db, id)))
@@ -372,7 +374,7 @@ export function registerCardTools(server: McpServer, db: Database) {
   server.registerTool(
     'restore_card',
     {
-      description: 'Restore (unarchive) a previously archived card.',
+      description: 'Restore an archived card to normal listings.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(cardAck(await restoreCard(db, id)))
@@ -382,7 +384,7 @@ export function registerCardTools(server: McpServer, db: Database) {
     'destroy_card',
     {
       description:
-        'Permanently delete a card (hard-delete, IRREVERSIBLE), along with its sub-tasks, comments, tags and blocker links. To merely hide a card, use archive_card instead.',
+        'Permanently delete a card, its subtasks, comments, tag links, and blocker links. Irreversible; use archive_card for recoverable removal.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(await destroyCard(db, id))

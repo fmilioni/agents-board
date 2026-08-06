@@ -8,7 +8,7 @@
       "name": "agents-board",
       "source": {
         "source": "local",
-        "path": "./plugins/codex/agents-board"
+        "path": "./plugins/agents-board"
       },
       "policy": {
         "installation": "AVAILABLE",

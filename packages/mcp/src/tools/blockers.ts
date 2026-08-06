@@ -11,7 +11,7 @@ export function registerBlockerTools(server: McpServer, db: Database) {
     'add_blocker',
     {
       description:
-        'Mark a card as blocked by another. `cardId` is the blocked card; `blockerId` is the card that must be resolved first. A card cannot block itself. Returns the blocked card\'s blockers.',
+        'Add a hard dependency: cardId is blocked by blockerId. Self-blocking is rejected. Returns the blocked card\'s current blockers.',
       inputSchema: { cardId: z.string(), blockerId: z.string() }
     },
     async ({ cardId, blockerId }) =>
@@ -22,7 +22,7 @@ export function registerBlockerTools(server: McpServer, db: Database) {
     'remove_blocker',
     {
       description:
-        'Remove a blocking dependency so `blockerId` no longer blocks `cardId`.',
+        'Remove the dependency in which blockerId blocks cardId. Returns the card\'s remaining blockers.',
       inputSchema: { cardId: z.string(), blockerId: z.string() }
     },
     async ({ cardId, blockerId }) =>

@@ -10,7 +10,7 @@ export function registerUploadTools(server: McpServer) {
     'issue_upload_token',
     {
       description:
-        'Mint a short-lived, project-scoped token that authenticates the attach-image script against the API when auth is on. It only authorizes uploading an image to THIS project and expires quickly; it cannot be reused for another project or for the diff-capture routes. Export it as AB_UPLOAD_TOKEN so the script sends it in the X-AB-Upload-Token header. In sem-auth mode the script works without a token — minting is only needed when auth is enabled.',
+        'Mint a short-lived token for attach-image when authentication is enabled. It authorizes uploads to one project only and cannot access diff routes. Pass it to the script as AB_UPLOAD_TOKEN; no token is needed when authentication is disabled.',
       inputSchema: { projectId: z.string() }
     },
     async ({ projectId }) => {

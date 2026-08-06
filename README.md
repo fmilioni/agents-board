@@ -6,7 +6,7 @@
 
 Agents Board gives Codex and Claude Code a real project-management system — cards, sprints, comments and docs — as **queryable state over MCP**, instead of spec Markdown files that grow without bound and go stale. A clean Nuxt UI mirrors the same board for humans, in real time.
 
-It ships separate plugin packages for **Codex and Claude Code**, each with host-native skills, review orchestration, and an MCP connection. Install it from your client's repository marketplace and the matching package becomes available together with the local MCP connection.
+It ships a single plugin package for **Codex and Claude Code** — two skills and the MCP connection. Install it from your client's repository marketplace and the board becomes available together with the local MCP connection.
 
 <br/>
 
@@ -19,7 +19,7 @@ It ships separate plugin packages for **Codex and Claude Code**, each with host-
 </div>
 
 > [!WARNING]
-> **Early stage — not yet stable.** Agents Board is under active development and not production-stable yet. Right now we're focused on **stabilizing the skills** (the `plan` / `implement` workflow the agent runs), so their behavior and the tool surface may still change between versions. Expect breaking changes and upgrade the plugin deliberately through Codex's `/plugins` browser or CLI, or through Claude Code's plugin marketplace.
+> **Early stage — not yet stable.** Agents Board is under active development and not production-stable yet. Right now we're focused on **stabilizing the skills** (`agents-board` and `plan`), so their behavior and the tool surface may still change between versions. Expect breaking changes and upgrade the plugin deliberately through Codex's `/plugins` browser or CLI, or through Claude Code's plugin marketplace.
 
 ---
 
@@ -94,7 +94,7 @@ Export a backup from the Claude Organizer UI, then import it from the Agents Boa
 
 ### 2. Install the plugin for your coding agent
 
-Each client has its own plugin package. Both deliver the **skills** *and* register the **MCP** without sharing host-specific workflow files.
+One plugin package serves both clients: the same host-neutral skills plus the **MCP** registration, read through each host's own manifest.
 
 #### Codex
 
@@ -116,7 +116,7 @@ Add the same repository through Claude Code's marketplace and install the plugin
 /plugin install agents-board@agents-board
 ```
 
-Start a new Claude Code session after installation. The tracked `CLAUDE.md` forwards to the shared `AGENTS.md`, so both clients follow the same repository rules and workflows.
+Start a new Claude Code session after installation. The tracked `CLAUDE.md` forwards to the shared `AGENTS.md`, so both clients follow the same repository rules and board conventions.
 
 ### 3. Configure the MCP for a remote host
 
@@ -140,24 +140,19 @@ Each server gets its own tool namespace, OAuth session and projects; the skills 
 
 ## Usage
 
-**You can drive everything through one entry point** — `$agents-board` — or invoke `$plan` and `$implement` directly:
+Talk to the board in plain language (any language) — the skills trigger on their own:
 
 ```text
-$agents-board plan GitHub authentication
+$agents-board what's next?
 $plan break GitHub authentication into cards
-$implement task AB-123
-$implement run story AB-127 all at once
 ```
-
-Pass it your intent in plain language (any language) and it picks the right workflow. The three user-facing skills are:
 
 | Skill | What it does | Triggers when… |
 | --- | --- | --- |
-| **`agents-board`** | The entry point: what the board is, which skill to use, and binding the repo to its project (record `projectId` + auth flag in `.agents-board.local.md`). | you reference the board — *"let's continue", "what's next?"* |
-| **`plan`** | Turn a fuzzy new demand into structured work (sprint → stories → tasks), get the design approved, then create the cards. | you describe something new to build, before it's broken down. |
-| **`implement`** | Execute existing cards through their lifecycle, either guided or in autopilot. Standalone cards get an isolated review; story children normally share a story-level review, with earlier review when risk warrants it. Autopilot delegates isolated units through worktrees and integrates them centrally. | you start/resume work on a specific card or ask to run a story/sprint — *"work AB-42", "run the sprint"*. |
+| **`agents-board`** | How to use the board: find the project (record `projectId` + auth flag in `.agents-board.local.md`), read cards/sprints/backlog, search cards and docs semantically, move a card through its statuses, comment, write docs, work the inbox. | you read or write anything on the board — *"let's continue", "what's next?", "move AB-42 to review"*. |
+| **`plan`** | Turn a fuzzy new demand into structured work (sprint → stories → cards): clarify what's ambiguous, **offer** research on the stack or the domain, clarify again with what it surfaced, get the design approved, then write cards a zero-context agent can execute. | you describe something new to build, before it's broken down. |
 
-For a multi-card run, `implement` asks how to drive it: **guided** (stop for your validation between cards) or **autopilot** (analyze dependencies, delegate isolated execution units to subagents/worktrees, integrate their one-per-card commits, then validate the assembled batch). A standalone card always gets a read-only **`reviewer`** subagent. Story children normally wait for one complete story review, but the executor can request an earlier per-card review for large, complex, foundational or otherwise risky work. Nested reviewers are preferred in autopilot, with an orchestrator fallback when the executor cannot dispatch one. Cards stay in `review` for your final validation, and the agent never merges a PR on its own.
+**No workflow is imposed on how you write code.** The plugin ships no implementation, review or worktree machinery — bring your own skills and process. What the board asks for is only that the card be moved to `in_progress`, land in `review` with a **test-plan comment** you can tick off, and reach `done` only when you approve it.
 
 ### Inbox
 

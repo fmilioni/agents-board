@@ -47,7 +47,7 @@ export function registerProjectTools(
     'list_projects',
     {
       description:
-        'List all projects tracked by agents-board. Pages with limit/offset; response is { projects, hasMore, offset }. Archived projects are hidden by default.',
+        'List projects accessible to the current session. Use when a projectId is not already known. Archived projects are hidden unless requested. Paginated response: { projects, hasMore, offset }.',
       inputSchema: {
         includeArchived: z
           .boolean()
@@ -79,7 +79,7 @@ export function registerProjectTools(
   server.registerTool(
     'get_project',
     {
-      description: 'Get a project by its slug.',
+      description: 'Get one project by its human-readable slug.',
       inputSchema: { slug: z.string().describe('Project slug (e.g. \'my-app\')') }
     },
     async ({ slug }) => asJson(await getProjectBySlug(db, slug))
@@ -89,7 +89,7 @@ export function registerProjectTools(
     'create_project',
     {
       description:
-        'Create a new project workspace. keyPrefix becomes the prefix for card keys (e.g. \'AB\' produces AB-1, AB-2). If omitted, derived from the slug.',
+        'Create a project workspace. keyPrefix controls new card keys (for example, AB produces AB-1); when omitted, it is derived from the slug.',
       inputSchema: {
         name: z.string().min(1).max(120),
         slug: z
@@ -114,7 +114,7 @@ export function registerProjectTools(
     'update_project',
     {
       description:
-        'Administratively update a project name, slug, or both. The project id, key prefix, existing card keys, grants, repository, and relationships remain unchanged.',
+        'Update a project name, slug, or both. Its id, key prefix, existing card keys, access grants, repository, and relationships remain unchanged.',
       inputSchema: z.object({
         id: z.string(),
         name: z.string().min(1).max(120).optional(),
@@ -136,7 +136,7 @@ export function registerProjectTools(
     'update_project_key_prefix',
     {
       description:
-        'Change the keyPrefix of a project. Existing card keys are NOT renamed - only new cards use the new prefix.',
+        'Change the prefix used for new card keys. Existing card keys are never renamed.',
       inputSchema: {
         id: z.string(),
         newPrefix: z
@@ -154,7 +154,7 @@ export function registerProjectTools(
     'archive_project',
     {
       description:
-        'Archive a project (soft, reversible). It disappears from list_projects by default and can be restored.',
+        'Archive a project reversibly. It disappears from normal listings but remains available to restore.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(projectAck(await archiveProject(db, id)))
@@ -163,7 +163,7 @@ export function registerProjectTools(
   server.registerTool(
     'restore_project',
     {
-      description: 'Restore a previously archived project.',
+      description: 'Restore an archived project to normal listings.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(projectAck(await restoreProject(db, id)))
@@ -173,7 +173,7 @@ export function registerProjectTools(
     'destroy_project',
     {
       description:
-        'DESTRUCTIVE & IRREVERSIBLE: permanently delete a project and EVERYTHING under it (sprints, cards, docs, tags, comments). Requires `confirmSlug` to equal the project slug; otherwise nothing is deleted.',
+        'Permanently delete a project and all of its sprints, cards, docs, tags, and comments. Irreversible; confirmSlug must exactly match the project slug.',
       inputSchema: {
         id: z.string(),
         confirmSlug: z
@@ -189,7 +189,7 @@ export function registerProjectTools(
     'set_project_repo',
     {
       description:
-        'Set (or clear) the project\'s source repository so commit hashes link to the provider\'s commit page. Pass `provider` (github|gitlab) + `repoWebUrl` (e.g. https://github.com/owner/repo), or null on both to clear. The skill calls this after detecting the git remote.',
+        'Set the GitHub or GitLab repository used to link commit hashes, or clear it by passing null for both fields. repoWebUrl is the browser URL without .git.',
       inputSchema: {
         id: z.string(),
         provider: z.enum(['github', 'gitlab']).nullable(),

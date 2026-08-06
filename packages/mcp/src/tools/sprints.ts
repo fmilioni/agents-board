@@ -29,7 +29,7 @@ export function registerSprintTools(server: McpServer, db: Database) {
     'list_sprints',
     {
       description:
-        'List sprints of a project. Pages with limit/offset; response is { sprints, hasMore, offset }. Archived sprints are hidden by default.',
+        'List a project\'s sprints. Archived sprints are hidden unless requested. Paginated response: { sprints, hasMore, offset }.',
       inputSchema: {
         projectId: z.string(),
         includeArchived: z
@@ -59,7 +59,7 @@ export function registerSprintTools(server: McpServer, db: Database) {
     'get_active_sprint',
     {
       description:
-        'Get the active sprints of a project. A project may have several active at once, so this returns an ARRAY (empty when none are active).',
+        'Get all active sprints for a project. Returns an array because several sprints may be active at once; empty means none are active.',
       inputSchema: { projectId: z.string() }
     },
     async ({ projectId }) => asJson(await getActiveSprints(db, projectId))
@@ -68,7 +68,7 @@ export function registerSprintTools(server: McpServer, db: Database) {
   server.registerTool(
     'create_sprint',
     {
-      description: 'Create a planned sprint (status=planned).',
+      description: 'Create a sprint in planned status. Use start_sprint separately when it should become active.',
       inputSchema: {
         projectId: z.string(),
         roadmapId: z.string().optional(),
@@ -94,7 +94,7 @@ export function registerSprintTools(server: McpServer, db: Database) {
     'update_sprint',
     {
       description:
-        'Rename a sprint or change its goal/objective. Pass the sprint id (spr_xxx) plus the fields to change. `goal` accepts null to clear it. Works for sprints in any status.',
+        'Update a sprint name or goal in any status. Pass goal=null to clear the goal; omitted fields remain unchanged.',
       inputSchema: {
         id: z.string(),
         name: z.string().min(1).max(120).optional(),
@@ -108,7 +108,7 @@ export function registerSprintTools(server: McpServer, db: Database) {
     'start_sprint',
     {
       description:
-        'Activate a sprint. Other sprints in the same project stay as they are — a project can have several active at once.',
+        'Activate a planned sprint. Other active sprints are unaffected because a project may have several active at once.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(sprintAck(await startSprint(db, id)))
@@ -117,7 +117,7 @@ export function registerSprintTools(server: McpServer, db: Database) {
   server.registerTool(
     'complete_sprint',
     {
-      description: 'Mark a sprint as completed.',
+      description: 'Mark a sprint completed and record its completion time.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(sprintAck(await completeSprint(db, id)))
@@ -127,7 +127,7 @@ export function registerSprintTools(server: McpServer, db: Database) {
     'deactivate_sprint',
     {
       description:
-        'Move an ACTIVE sprint back to `planned` (the inverse of start) WITHOUT completing it. Its cards stay assigned but drop off the board (which shows only active sprints); endsAt is not set. No-op if the sprint is not active. Use start_sprint to make it active again.',
+        'Move an active sprint back to planned without completing it. Cards remain assigned; non-active sprints leave the active board. No-op when the sprint is not active.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(sprintAck(await deactivateSprint(db, id)))
@@ -137,7 +137,7 @@ export function registerSprintTools(server: McpServer, db: Database) {
     'reopen_sprint',
     {
       description:
-        'Reopen a completed (or archived) sprint back to `planned` so work can resume or missing cards can be added. Clears endsAt and unarchives it. Never activates — use start_sprint afterwards to make it active.',
+        'Return a completed or archived sprint to planned, clearing its completion time and archive state. It is not activated; call start_sprint separately.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(sprintAck(await reopenSprint(db, id)))
@@ -147,7 +147,7 @@ export function registerSprintTools(server: McpServer, db: Database) {
     'archive_sprint',
     {
       description:
-        'Archive a sprint (soft-delete): it disappears from normal listings but is kept and can be restored. Its cards travel with it (they are not individually marked). Shows up in list_sprints with archivedOnly=true.',
+        'Archive a sprint reversibly. It disappears from normal listings, and its cards follow the sprint without being archived individually.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(sprintAck(await archiveSprint(db, id)))
@@ -156,7 +156,7 @@ export function registerSprintTools(server: McpServer, db: Database) {
   server.registerTool(
     'restore_sprint',
     {
-      description: 'Restore (unarchive) a previously archived sprint.',
+      description: 'Restore an archived sprint without changing its workflow status.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(sprintAck(await restoreSprint(db, id)))
@@ -166,7 +166,7 @@ export function registerSprintTools(server: McpServer, db: Database) {
     'destroy_sprint',
     {
       description:
-        'Permanently delete a sprint and ALL its cards (hard-delete, IRREVERSIBLE), including those cards\' comments, tags and blocker links. To merely hide a sprint, use archive_sprint instead.',
+        'Permanently delete a sprint and all of its cards, including their comments, tag links, and blockers. Irreversible; use archive_sprint for recoverable removal.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(await destroySprint(db, id))

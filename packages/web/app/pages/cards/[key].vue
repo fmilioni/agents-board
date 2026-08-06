@@ -344,12 +344,10 @@ const meta = computed(() =>
 )
 
 function authorLabel(c: Comment) {
-  if (c.author === 'ai') return 'Claude'
+  if (c.author === 'ai') return 'Agent'
   return c.authorName ?? 'User'
 }
 
-// AI-read state badge — only user comments carry one (ai comments are born
-// `handled`, never a pending state).
 const aiStatusBadge = {
   unread: { label: 'unread by AI', color: 'warning', ring: 'ring-1 ring-warning/60' },
   read: { label: 'read by AI', color: 'neutral', ring: '' },
@@ -372,13 +370,11 @@ function commentInitials(name: string | null | undefined) {
   return initials || undefined
 }
 
-// Avatar cascades src → text → icon: a `user` shows their GitHub photo, else
-// initials, else a generic icon (sem-auth / legacy comments with no identity).
 function commentAvatar(c: Comment) {
   if (c.author === 'ai') {
     return {
       icon: 'i-lucide-bot',
-      alt: 'Claude',
+      alt: 'Agent',
       ui: { root: 'bg-primary/15 text-primary' }
     }
   }
@@ -921,7 +917,7 @@ const providerIcon = computed(() =>
             <form class="mt-4 space-y-2" @submit.prevent="submitComment">
               <MarkdownEditor
                 v-model="newComment"
-                placeholder="Write a comment for Claude… (markdown supported)"
+                placeholder="Write a comment for Agent… (markdown supported)"
               />
               <div class="flex justify-end">
                 <UButton

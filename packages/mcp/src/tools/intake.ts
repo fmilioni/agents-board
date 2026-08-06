@@ -27,7 +27,7 @@ export function registerIntakeTools(server: McpServer, db: Database) {
     'create_inbox',
     {
       description:
-        'Capture a raw demand into the Inbox (a pending intake item) without planning it into cards yet. Use to save a follow-up or idea for the `plan` skill to triage later. `bodyMd` is the demand text (markdown).',
+        'Capture an unplanned demand as a pending Inbox item. Use for future or separate work, not unfinished work created by the current change. Check search_cards and list_inbox first to avoid duplicates; after planning, link the resulting cards with mark_inbox_planned.',
       inputSchema: {
         projectId: z.string(),
         bodyMd: z.string().min(1)
@@ -41,7 +41,7 @@ export function registerIntakeTools(server: McpServer, db: Database) {
     'list_inbox',
     {
       description:
-        'List the raw intake demands of a project (the Inbox). Defaults to pending demands; pass status to filter. Each item has id, bodyMd, status, plannedCardKeys and timestamps. Pages with limit/offset; response is { items, hasMore, offset }.',
+        'List a project\'s Inbox demands and referenced attachments. Defaults to pending; filter by status when needed. Paginated response: { items, hasMore, offset }.',
       inputSchema: {
         projectId: z.string(),
         status: intakeStatus.optional(),
@@ -72,7 +72,7 @@ export function registerIntakeTools(server: McpServer, db: Database) {
     'update_inbox',
     {
       description:
-        'Rewrite the text of an inbox demand. Use to sharpen a demand captured in a hurry or to fold in context that arrived later — not to turn it into a different demand (capture that one with create_inbox). Works on an archived demand too, but its images were already reclaimed by the archive, so re-referencing them there gets you a broken image. Returns null when no demand has that id.',
+        'Replace an Inbox demand\'s markdown body to clarify the same demand. Create a separate item for different work. Archived items can be edited, but attachments reclaimed during archive cannot be restored by reusing their links.',
       inputSchema: {
         id: z.string(),
         bodyMd: z.string().min(1)
@@ -86,7 +86,7 @@ export function registerIntakeTools(server: McpServer, db: Database) {
     'mark_inbox_planned',
     {
       description:
-        'Record the keys of the cards an inbox demand became (e.g. AB-12, AB-13), marking it planned. Call after a demand has been planned into cards. Calling it again on a PLANNED demand REPLACES the whole set — that is how a planning that pointed at the wrong card or missed one is corrected. On an ARCHIVED demand call restore_inbox first: this tool would leave it planned yet still stamped as archived, with its images unlinked.',
+        'Mark an Inbox demand planned and record the complete card-key set it produced. Repeating the call replaces that set. Restore an archived demand first so its archive state and attachment links are reconciled.',
       inputSchema: {
         id: z.string(),
         cardKeys: z.array(z.string()).min(1)
@@ -100,7 +100,7 @@ export function registerIntakeTools(server: McpServer, db: Database) {
     'archive_inbox',
     {
       description:
-        'Archive an inbox demand (status archived) — recoverable via restore_inbox. Use when a demand is discarded during planning but the user may want it back.',
+        'Archive an Inbox demand reversibly, removing it from the pending queue.',
       inputSchema: {
         id: z.string()
       }
@@ -112,7 +112,7 @@ export function registerIntakeTools(server: McpServer, db: Database) {
     'restore_inbox',
     {
       description:
-        'Bring an archived inbox demand back. The status it lands in is derived, not chosen: `planned` only while at least one card it points at is still active, `pending` otherwise (the keys are kept either way, so a demand whose cards were all archived comes back waiting to be planned again). Returns null when no demand has that id.',
+        'Restore an archived Inbox demand. Status is derived: planned while any linked card remains active, otherwise pending. Existing plannedCardKeys are retained.',
       inputSchema: {
         id: z.string()
       }
@@ -124,7 +124,7 @@ export function registerIntakeTools(server: McpServer, db: Database) {
     'destroy_inbox',
     {
       description:
-        'Permanently delete an inbox demand. Use when a discarded demand should be gone for good; prefer archive_inbox when recovery might be wanted.',
+        'Permanently delete an Inbox demand. Irreversible; use archive_inbox when recovery may be needed.',
       inputSchema: {
         id: z.string()
       }

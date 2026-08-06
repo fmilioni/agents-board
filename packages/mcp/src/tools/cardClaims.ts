@@ -15,7 +15,7 @@ const sessionToken = z
   .string()
   .min(1)
   .describe(
-    'Opaque session token this run uses to hold its claims. Generate ONE per run and reuse it for every claim/release/take-over call (the implement skill does this).'
+    'Opaque owner token. Generate one per working session and reuse it for claim, release, and take-over calls.'
   )
 
 export function registerCardClaimTools(server: McpServer, db: Database) {
@@ -23,7 +23,7 @@ export function registerCardClaimTools(server: McpServer, db: Database) {
     'claim_task',
     {
       description:
-        'Reserve a task/story for your session (advisory — signals it is in your work buffer so other sessions/machines do not start the same work; nothing is locked). Reserving a STORY also reserves its not-yet-started children. If the card is already held by ANOTHER session, returns `{ ok:false, conflict:true, claim }` WITHOUT changing it — ask the user before take_over_task. Claim state also shows on get_card/list_cards (`claim`).',
+        'Advisory-reserve a card for this session; no data is locked. Claiming a story also claims its not-yet-started children. A claim held by another session returns { ok:false, conflict:true, claim } without changing ownership; do not take it over without user approval.',
       inputSchema: {
         cardKey: z.string().describe('Card key, e.g. \'AB-12\'.'),
         sessionToken,
@@ -51,7 +51,7 @@ export function registerCardClaimTools(server: McpServer, db: Database) {
     'release_task',
     {
       description:
-        'Release your session\'s claim on a task/story (owner only — your sessionToken must match). A story also releases the children claims held by the same token. Releasing an unclaimed card is a no-op. Completing a task (status done) already releases it automatically.',
+        'Release a claim owned by the matching sessionToken. Releasing a story also releases child claims held by that token; unclaimed cards are a no-op, and moving a card to done already releases it.',
       inputSchema: {
         cardKey: z.string().describe('Card key, e.g. \'AB-12\'.'),
         sessionToken
@@ -70,7 +70,7 @@ export function registerCardClaimTools(server: McpServer, db: Database) {
     'take_over_task',
     {
       description:
-        'Take over a task/story claimed by another session, swapping the claim to your sessionToken. Use ONLY after the user explicitly confirms the take-over (the previous session may have crashed/been interrupted). A story also transfers its not-yet-started and already-claimed children.',
+        'Replace another session\'s claim with this sessionToken. Requires explicit user approval because the other session may still be working. Story take-over also transfers eligible child claims.',
       inputSchema: {
         cardKey: z.string().describe('Card key, e.g. \'AB-12\'.'),
         sessionToken,

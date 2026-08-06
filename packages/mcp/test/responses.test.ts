@@ -8,6 +8,7 @@ describe('MCP server guidance', () => {
   it('makes scope, focused reads, and mutation safety self-contained early', () => {
     const opening = serverInstructions.slice(0, 512).toLowerCase()
 
+    assert.ok(serverInstructions.length <= 700)
     assert.match(opening, /project scope/)
     assert.match(opening, /focused, paginated reads/)
     assert.match(opening, /mutations change shared project state/)

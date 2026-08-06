@@ -4,13 +4,12 @@ Project management for coding agents, exposed over MCP. Codex and Claude Code ca
 
 ## Skills
 
-Three user-facing skills drive the work. Codex receives them from `plugins/codex/agents-board`; Claude Code receives its host-native versions from `plugins/claude-code/agents-board`:
+Two skills ship from a **single** host-neutral package, `plugins/agents-board` — Codex reads `.codex-plugin/plugin.json`, Claude Code reads `.claude-plugin/plugin.json` + `.mcp.json`, both load the same `skills/`:
 
-- **`agents-board`** — the entry point: what the board is, which skill to use, and how to bind the repo to its project (record `projectId` + the auth flag in `.agents-board.local.md`).
-- **`plan`** — turn a new demand into sprints/stories/tasks (auto-triggers when you describe something to build). All card creation goes through here.
-- **`implement`** — execute existing cards through their lifecycle, single-card or as a guided/autopilot multi-card run. Standalone cards get a fresh-subagent review; story children normally share one complete story review, while risky or foundational children may be reviewed earlier at the executor's discretion. Autopilot partitions isolated execution units across subagents/worktrees and integrates their per-card commits centrally. Auto-triggers when you start building a specific card.
+- **`agents-board`** — how to use the board: bind the repo to its project (record `projectId` + the auth flag in `.agents-board.local.md`), read and search it, keep a card's status honest, comment, write docs, work the inbox, attach diffs and images.
+- **`plan`** — turn a new demand into sprints/stories/cards: clarify, offer research, clarify again, get approval, then write cards a zero-context agent can execute. All card creation goes through here.
 
-Every required review runs in a fresh read-only subagent dispatched by `implement`. In autopilot, an executor may dispatch its own nested reviewer; if it cannot, the orchestration agent performs that review from the executor's structured handoff. Codex explicitly loads the internal **`reviewer`** skill; Claude Code dispatches its packaged **`agents-board:reviewer`** agent. Neither is a normal user-facing workflow entry point. The "never assume — resolve open decisions" doctrine is carried **inline** in `plan` and `implement`, so each user-facing skill is self-contained.
+**The plugin deliberately stops at the board's edge.** It ships no implementation, review, worktree or orchestration workflow — how code gets written is the user's process, with whatever skills they prefer. A change to a skill must not smuggle one back in.
 
 Let the skills drive. **What** to do (active sprint, cards, backlog, comments, docs) is the source of truth and lives **in the MCP**, not here — query it through the Agents Board MCP tools. Don't duplicate state into this file.
 
@@ -37,7 +36,7 @@ Architecture, data model, decisions (ADRs), code/UI patterns and per-module deta
 ## Project rules (overrides)
 
 - **Language**: write **skills and code in English** (the product is international). Content authored for the user — **tasks, comments and docs** — follows the user's language.
-- **Code comments**: the default is **none** — the code, the types, the names and the test names carry the intent. The full bar (the closed list of what justifies one, what never does, and why a test body takes none) lives in the `implement` skill's step 4 and in the `reviewer` agent, which apply it identically — don't restate it here.
+- **Code comments**: the default is **none** — the code, the types, the names and the test names carry the intent. A comment is justified only when it points at something **outside the diff** that a reader cannot recover from them, and only these five: an external bug/quirk being worked around, a spec/protocol/API requirement, a measured constraint, an ordering that looks removable and isn't, or a public-API doc. **The list is closed.** Never restate what the code says, banner a section (`// state`, `// helpers`), note a ticket ref, or write relative to the change (`// now it's blue`) — code only knows its current state. **No comments inside a test body**: the `it(...)` title *is* the explanation; if the intent needs explaining, rename the test. One rationale, one place. Touching existing code, delete the comments that fail this bar.
 - **Commits**: one commit per card/task, **only after the user confirms** it works; the message is written **in English** and references the key (e.g. `feat(tags): … (<KEY>-4)`). After committing, attach its diff to the card with `pnpm attach-commit <sha>` (captured outside the AI context — never read or paste the diff).
 - **PRs**: written **in English** (title *and* body, same as commits — only tasks/comments/docs follow the user's language). Write the **title as a conventional commit** (`feat(scope): … (<KEY>-N)`); PRs are **squash-merged**, so the title becomes the commit message. The body summarizes the work — **no "Generated with Codex" footer**.
   - **Merging is the user's call.** By default Codex opens the PR and **stops**; the user merges. Any deployment-specific merge governance (branch protection, the exact merge command, who may override it) lives in `.agents-board.local.md`.

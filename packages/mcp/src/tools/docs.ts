@@ -43,7 +43,7 @@ export function registerDocTools(server: McpServer, db: Database) {
     'list_docs',
     {
       description:
-        'List project docs (modules, ADRs, guides, notes). Returns metadata (id/title/kind/parentId) WITHOUT bodyMd. Use read_doc for full content. Optionally filter by kind. Pages with limit/offset; response is { docs, hasMore, offset }. Archived docs (and their descendants) are hidden by default.',
+        'List project doc metadata without bodyMd. Supports kind and archive filters; use read_doc for full content. Paginated response: { docs, hasMore, offset }.',
       inputSchema: {
         projectId: z.string(),
         kind: docKind.optional(),
@@ -74,7 +74,7 @@ export function registerDocTools(server: McpServer, db: Database) {
   server.registerTool(
     'read_doc',
     {
-      description: 'Read a single doc by id, including full bodyMd (markdown).',
+      description: 'Read one doc by id, including full bodyMd and referenced attachments.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => {
@@ -89,7 +89,7 @@ export function registerDocTools(server: McpServer, db: Database) {
     'search_docs',
     {
       description:
-        'Hybrid semantic search over a project\'s docs (title/summary/body): lexical full-text (Postgres tsvector) fused with embedding similarity by RRF, so it ranks by MEANING — a conceptual / natural-language query matches the right doc even when the wording differs, and synonyms/typos still hit (falls back to lexical-only when embeddings are unavailable). Web-style queries (quoted phrases, OR, -exclude) and substring/trigram matching still work. Archived docs (and their subtree) are excluded by default — set includeArchived to search them too. Returns metadata WITHOUT bodyMd; use read_doc for full content. Pages with limit/offset; response is { docs, hasMore, offset }.',
+        'Search doc titles, summaries, and bodies with hybrid lexical and semantic ranking; falls back to lexical search when embeddings are unavailable. Supports natural language, quoted phrases, OR, -exclude, and optional archived content. Returns metadata without bodyMd; use read_doc for full content. Paginated and read-only.',
       inputSchema: {
         projectId: z.string(),
         query: z.string().min(1),
@@ -114,7 +114,7 @@ export function registerDocTools(server: McpServer, db: Database) {
     'write_doc',
     {
       description:
-        'Create a new doc, or update an existing one if `id` is provided. Use `kind` to classify: module (a code domain/area), adr (architecture decision record), guide (how-to), note (anything else). `parentId` nests the doc under another. `summary` (one-line description shown in lists/search) and `bodyMd` (the markdown content) are REQUIRED when creating (no `id`), optional on update.',
+        'Create or update durable project documentation. Without id, projectId, title, summary, and bodyMd are required; kind classifies module, ADR, guide, or note, and parentId nests it. With id, only supplied fields change and bodyMd replaces the full body. Prefer updating an existing matching doc over creating a duplicate.',
       inputSchema: {
         id: z.string().optional(),
         projectId: z.string().optional(),
@@ -182,7 +182,7 @@ export function registerDocTools(server: McpServer, db: Database) {
     'archive_doc',
     {
       description:
-        'Archive a doc (soft-delete): it (and its subtree) disappears from list_docs but is kept and can be restored. Shows up with archivedOnly=true.',
+        'Archive a doc and its subtree reversibly. They disappear from normal listings and remain available through archived filters.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(docAck(await archiveDoc(db, id)))
@@ -191,7 +191,7 @@ export function registerDocTools(server: McpServer, db: Database) {
   server.registerTool(
     'restore_doc',
     {
-      description: 'Restore (unarchive) a previously archived doc.',
+      description: 'Restore an archived doc and its subtree to normal listings.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(docAck(await restoreDoc(db, id)))
@@ -201,7 +201,7 @@ export function registerDocTools(server: McpServer, db: Database) {
     'destroy_doc',
     {
       description:
-        'Permanently delete a doc and its children (hard-delete via cascade, IRREVERSIBLE). To merely hide a doc, use archive_doc instead.',
+        'Permanently delete a doc and its descendants. Irreversible; use archive_doc for recoverable removal.',
       inputSchema: { id: z.string() }
     },
     async ({ id }) => asJson(await destroyDoc(db, id))

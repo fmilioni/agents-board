@@ -9,14 +9,16 @@ Agents Board is a Jira-style board exposed through the connected board tools: a 
 
 This skill only tells you **which skill to use** and **how to find the project**. The real workflow lives in the phase skills below — switch to one instead of working from memory.
 
-**Task lists are interactive — reach for them on purpose, not for every list.** Card descriptions and doc bodies render GitHub-style task lists (`- [ ]` / `- [x]`) as **clickable** checkboxes: the user ticks them off directly and it's saved. Use them only for **manual steps the user actually has to carry out and tick off** as they go:
+**Task lists are interactive — reach for them on purpose, not for every list.** Card descriptions and doc bodies render GitHub-style task lists (`- [ ]` / `- [x]`) as **clickable** checkboxes whose state is saved. Use them only for concrete verification or runbook steps with a real completion state:
 
-- **Test-plan / QA steps** — the steps to verify a card, ticked as each one passes (the primary case).
+- **Test-plan / QA steps** — the steps to verify a card, marked as each one passes (the primary case).
 - **Manual runbooks** — release/deploy/rollback, data migration, env setup, onboarding.
 
-**The single test: would the user physically click this checkbox to mark it done?** If yes → task list. If it's anything else — prose, a non-actionable list, a spec the system or the AI satisfies — use **plain bullets** (`- `), never `- [ ]`. When unsure, it's a plain bullet.
+**The single test: does each item represent an action whose done/pending state matters?** If yes → task list. If it's anything else — prose, a non-actionable list, a spec the system or the AI satisfies — use **plain bullets** (`- `), never `- [ ]`. When unsure, it's a plain bullet.
 
-Don't use them for prose or non-actionable lists, or to track real units of work — that's what cards and sub-tasks are for. In particular, **acceptance criteria and definition-of-done are NEVER task lists**: they are specs/conditions (descriptions of *what must be true*), not steps the user carries out — a clickable checkbox there is wrong, since it invites the user to "complete" a spec by ticking it. Reserve `- [ ]` for runbooks and QA test-plans the user actually walks through.
+**The marker must tell the truth at creation time.** Use `- [x]` for a check the agent already executed successfully and `- [ ]` only for a step that is still pending. Never present a completed automated check as unchecked for the user to repeat. If one line mixes completed and pending work, split it into separate items so each checkbox has one truthful state.
+
+Don't use them for prose or non-actionable lists, or to track real units of work — that's what cards and sub-tasks are for. In particular, **acceptance criteria and definition-of-done are NEVER task lists**: they are specs/conditions (descriptions of *what must be true*), not steps someone carries out — a clickable checkbox there is wrong, since it invites the user to "complete" a spec by ticking it. Reserve task-list markers for concrete runbook and QA test-plan actions.
 
 ## The inbox holds demands — not the debt you just created
 

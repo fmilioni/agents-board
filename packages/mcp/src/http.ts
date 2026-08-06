@@ -37,6 +37,18 @@ export interface HttpAuthRuntime {
   resourceUrl: string
 }
 
+interface AuthenticatedRequest {
+  authEnabled: boolean
+  ok: boolean
+  userId: string | null
+}
+
+interface HttpSession {
+  authEnabled: boolean
+  transport: StreamableHTTPServerTransport
+  userId: string | null
+}
+
 const MCP_PATH = '/mcp'
 const PROTECTED_RESOURCE_PATH = '/.well-known/oauth-protected-resource'
 
@@ -78,7 +90,7 @@ function readJsonBody(req: IncomingMessage): Promise<unknown> {
 // favour of OAuth.
 export function startHttpServer(options: HttpServerOptions): Server {
   const { db, host, port } = options
-  const transports = new Map<string, StreamableHTTPServerTransport>()
+  const sessions = new Map<string, HttpSession>()
   let resolvedAuthRuntime: HttpAuthRuntime | undefined
 
   function authRuntime() {
@@ -100,15 +112,34 @@ export function startHttpServer(options: HttpServerOptions): Server {
   // mode) drives the project scope built when a session's server is created.
   async function authenticate(
     req: IncomingMessage
-  ): Promise<{ ok: boolean, userId: string | null }> {
+  ): Promise<AuthenticatedRequest> {
     const { authEnabled } = await getSystemSettings(db)
-    if (!authEnabled) return { ok: true, userId: null }
+    if (!authEnabled) return { authEnabled, ok: true, userId: null }
     const session = await authRuntime().getMcpSession(fromNodeHeaders(req.headers))
     // getMcpSession looks the token up but doesn't enforce expiry — guard here.
-    if (!session || session.accessTokenExpiresAt.getTime() <= Date.now()) {
-      return { ok: false, userId: null }
+    if (
+      !session?.userId
+      || session.accessTokenExpiresAt.getTime() <= Date.now()
+    ) {
+      return { authEnabled, ok: false, userId: null }
     }
-    return { ok: true, userId: session.userId }
+    return { authEnabled, ok: true, userId: session.userId }
+  }
+
+  function sessionTransport(
+    sessionId: string | undefined,
+    authn: AuthenticatedRequest
+  ) {
+    if (!sessionId) return undefined
+    const session = sessions.get(sessionId)
+    if (
+      !session
+      || session.authEnabled !== authn.authEnabled
+      || session.userId !== authn.userId
+    ) {
+      return undefined
+    }
+    return session.transport
   }
 
   async function handle(req: IncomingMessage, res: ServerResponse) {
@@ -159,7 +190,7 @@ export function startHttpServer(options: HttpServerOptions): Server {
         return
       }
 
-      let transport = sessionId ? transports.get(sessionId) : undefined
+      let transport = sessionTransport(sessionId, authn)
       if (!transport) {
         // Stale/unknown session (e.g. this process restarted and lost the map):
         // answer 404 so the client knows the session is gone and reinitializes a
@@ -176,11 +207,15 @@ export function startHttpServer(options: HttpServerOptions): Server {
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (id) => {
-            transports.set(id, transport!)
+            sessions.set(id, {
+              authEnabled: authn.authEnabled,
+              transport: transport!,
+              userId: authn.userId
+            })
           }
         })
         transport.onclose = () => {
-          if (transport!.sessionId) transports.delete(transport!.sessionId)
+          if (transport!.sessionId) sessions.delete(transport!.sessionId)
         }
         // Scope is fixed for the session at initialize, from the bearer's user
         // (null in sem-auth → unrestricted). Subsequent requests on the session
@@ -197,7 +232,7 @@ export function startHttpServer(options: HttpServerOptions): Server {
 
     // GET (SSE stream) and DELETE (session termination) need an open session.
     if (req.method === 'GET' || req.method === 'DELETE') {
-      const transport = sessionId ? transports.get(sessionId) : undefined
+      const transport = sessionTransport(sessionId, authn)
       if (!transport) {
         // Same contract as POST: a known-but-gone session is 404 (reinitialize),
         // a missing header is 400.

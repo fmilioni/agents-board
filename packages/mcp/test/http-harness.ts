@@ -35,6 +35,7 @@ interface BearerOptions {
   projectIds?: string[]
   role?: 'admin' | 'user'
   status?: 'approved' | 'pending'
+  userless?: boolean
 }
 
 interface HarnessOptions {
@@ -267,7 +268,7 @@ export class McpHttpHarness {
       accessTokenExpiresAt: new Date(now + (options.expired ? -60_000 : 60_000)),
       refreshTokenExpiresAt: new Date(now + 120_000),
       clientId,
-      userId,
+      userId: options.userless ? null : userId,
       scopes: 'openid profile email offline_access'
     })
 

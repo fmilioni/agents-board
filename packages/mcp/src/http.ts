@@ -22,8 +22,19 @@ import { createMcpServer } from './create-server'
 import { type McpScope, resolveMcpScope } from './scope'
 
 interface HttpServerOptions {
+  authRuntime?: () => HttpAuthRuntime
   db: Database
+  host?: string
   port: number
+}
+
+export interface HttpAuthRuntime {
+  getMcpSession: (headers: Headers) => Promise<{
+    accessTokenExpiresAt: Date
+    userId: string | null
+  } | null>
+  protectedResourceMetadata: (request: Request) => Promise<Response>
+  resourceUrl: string
 }
 
 const MCP_PATH = '/mcp'
@@ -65,13 +76,25 @@ function readJsonBody(req: IncomingMessage): Promise<unknown> {
 // the shared better-auth store via getMcpSession); when disabled it stays open
 // without login (sem-auth, T3.4). The static MCP_AUTH_TOKEN was dropped in
 // favour of OAuth.
-export function startHttpServer({ db, port }: HttpServerOptions): Server {
+export function startHttpServer(options: HttpServerOptions): Server {
+  const { db, host, port } = options
   const transports = new Map<string, StreamableHTTPServerTransport>()
-  const auth = createAuth(db)
-  const protectedResourceMetadata = oAuthProtectedResourceMetadata(auth)
-  // Per RFC 9728: a 401 points the client at the resource metadata so it can
-  // discover the authorization server and start the OAuth flow.
-  const wwwAuthenticate = `Bearer resource_metadata="${getMcpResourceUrl()}${PROTECTED_RESOURCE_PATH}"`
+  let resolvedAuthRuntime: HttpAuthRuntime | undefined
+
+  function authRuntime() {
+    if (!resolvedAuthRuntime) {
+      if (options.authRuntime) resolvedAuthRuntime = options.authRuntime()
+      else {
+        const auth = createAuth(db)
+        resolvedAuthRuntime = {
+          getMcpSession: headers => auth.api.getMcpSession({ headers }),
+          protectedResourceMetadata: oAuthProtectedResourceMetadata(auth),
+          resourceUrl: getMcpResourceUrl()
+        }
+      }
+    }
+    return resolvedAuthRuntime
+  }
 
   // Resolves the request's identity. `ok` gates access; `userId` (null in sem-auth
   // mode) drives the project scope built when a session's server is created.
@@ -80,9 +103,7 @@ export function startHttpServer({ db, port }: HttpServerOptions): Server {
   ): Promise<{ ok: boolean, userId: string | null }> {
     const { authEnabled } = await getSystemSettings(db)
     if (!authEnabled) return { ok: true, userId: null }
-    const session = await auth.api.getMcpSession({
-      headers: fromNodeHeaders(req.headers)
-    })
+    const session = await authRuntime().getMcpSession(fromNodeHeaders(req.headers))
     // getMcpSession looks the token up but doesn't enforce expiry — guard here.
     if (!session || session.accessTokenExpiresAt.getTime() <= Date.now()) {
       return { ok: false, userId: null }
@@ -100,7 +121,7 @@ export function startHttpServer({ db, port }: HttpServerOptions): Server {
         res.writeHead(405).end()
         return
       }
-      const webRes = await protectedResourceMetadata(
+      const webRes = await authRuntime().protectedResourceMetadata(
         new Request(url, { method: 'GET', headers: fromNodeHeaders(req.headers) })
       )
       // Plain JSON metadata, no Set-Cookie — so Object.fromEntries (which would
@@ -117,6 +138,7 @@ export function startHttpServer({ db, port }: HttpServerOptions): Server {
 
     const authn = await authenticate(req)
     if (!authn.ok) {
+      const wwwAuthenticate = `Bearer resource_metadata="${authRuntime().resourceUrl}${PROTECTED_RESOURCE_PATH}"`
       res.writeHead(401, {
         'content-type': 'application/json',
         'WWW-Authenticate': wwwAuthenticate,
@@ -197,9 +219,11 @@ export function startHttpServer({ db, port }: HttpServerOptions): Server {
     })
   })
 
-  httpServer.listen(port, () => {
+  httpServer.listen(port, host, () => {
+    const address = httpServer.address()
+    const boundPort = typeof address === 'object' && address ? address.port : port
     console.error(
-      `[agents-board-mcp] Streamable HTTP transport on http://127.0.0.1:${port}${MCP_PATH} (OAuth when auth is enabled)`
+      `[agents-board-mcp] Streamable HTTP transport on http://${host ?? '127.0.0.1'}:${boundPort}${MCP_PATH} (OAuth when auth is enabled)`
     )
   })
 
